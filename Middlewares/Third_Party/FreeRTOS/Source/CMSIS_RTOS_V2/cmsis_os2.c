@@ -649,7 +649,7 @@ osStatus_t osThreadResume (osThreadId_t thread_id) {
 
 __NO_RETURN void osThreadExit (void) {
 #ifndef USE_FreeRTOS_HEAP_1
-  vTaskDelete (NULL);
+  osThreadTerminate (NULL);
 #endif
   for (;;);
 }
@@ -671,7 +671,7 @@ osStatus_t osThreadTerminate (osThreadId_t thread_id) {
 
     if (tstate != eDeleted) {
       stat = osOK;
-      vTaskDelete (hTask);
+      osThreadTerminate (hTask);
     } else {
       stat = osErrorResource;
     }

@@ -1,5 +1,7 @@
 #include "printerController.h"
 
+#include "esp32.h"
+
 
 void PC_init(void) {
 	PC_RegCallback();
@@ -22,14 +24,91 @@ void PC_RegCallback(void) {
 
 void StartToPrintCmdHandler(const char *args, void *res) {
 #ifdef DEBUG
-	printf("Start Printing...\r\n");
+    printf("Start Printing...\r\n");
 #endif
-	FIL file;
-	FRESULT f_res;
-	char tmpChar[20]; //佔存每行指令
 
+    FIL file;
+    FRESULT f_res;
+    char filename[FILENAME_SIZE] = {0};
+    char gcode_line[256] = {0};
+    char printer_response[64] = {0};
 
- 
+    bool file_opened = false;
+	strcpy(filename, "cube.gcode");
+
+    // 開啟檔案
+    f_res = f_open(&file, filename, FA_READ);
+    if (f_res != FR_OK) {
+        printf("Failed to open file: %d\r\n", f_res);
+        return;
+    }
+    file_opened = true;
+    ESP32_SetState(ESP32_BUSY);
+
+    // 逐行讀取並發送 G-code
+    while (f_gets(gcode_line, sizeof(gcode_line), &file) != NULL) {
+        // 移除行尾換行符
+        size_t len = strlen(gcode_line);
+        if (len > 0 && (gcode_line[len-1] == '\n' || gcode_line[len-1] == '\r')) {
+            gcode_line[len-1] = '\0';
+            if (len > 1 && gcode_line[len-2] == '\r') {
+                gcode_line[len-2] = '\0';
+            }
+        }
+
+        // 跳過空行和註解行
+        if (strlen(gcode_line) == 0 || gcode_line[0] == ';') {
+            continue;
+        }
+        // 發送 G-code 到印表機
+        printf("Sending: %s\r\n", gcode_line);
+        strcat(gcode_line, "\r\n");
+
+        // HAL_StatusTypeDef uart_status = HAL_UART_Transmit(&huart3,
+        //                                                  (uint8_t*)gcode_line,
+        //                                                  strlen(gcode_line),
+        //                                                  1000);
+        //
+        // if (uart_status != HAL_OK) {
+        //     printf("UART transmission failed: %d\r\n", uart_status);
+        //     break;
+        // }
+
+        // 等待印表機回復 "ok"
+        memset(printer_response, 0, sizeof(printer_response));
+
+        // 使用阻塞接收等待 "ok" 回應
+        // uart_status = HAL_UART_Receive(&huart3,
+        //                               (uint8_t*)printer_response,
+        //                               sizeof(printer_response) - 1,
+        //                               5000);  // 5秒超時
+
+        // if (uart_status == HAL_OK || uart_status == HAL_TIMEOUT) {
+        //     // 確保字串結尾
+        //     printer_response[sizeof(printer_response) - 1] = '\0';
+        //
+        //     // 檢查是否收到 "ok"
+        //     if (strstr(printer_response, "ok") != NULL) {
+        //         printf("Printer responded: %s", printer_response);
+        //     } else {
+        //         printf("Unexpected printer response: %s\r\n", printer_response);
+        //         // 繼續執行，不中斷列印
+        //     }
+        // } else {
+        //     printf("Failed to receive printer response: %d\r\n", uart_status);
+        //     // 可選擇是否中斷列印
+        //     break;
+        // }
+        // 清空 gcode_line 準備下一行
+        memset(gcode_line, 0, sizeof(gcode_line));
+    }
+
+    printf("File transmission completed\r\n");
+    // 清理資源
+    if (file_opened) {
+        f_close(&file);
+    }
+    ESP32_SetState(ESP32_IDLE);
 }
 
 void PausePrintingCmdHandler(const char *args, void *res) {

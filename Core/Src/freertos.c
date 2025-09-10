@@ -53,8 +53,8 @@
 osThreadId_t UITaskHandle;
 const osThreadAttr_t UI_Task_attributes = {
 	.name = "UI_Task",
-	.stack_size = 128* 16,
-	.priority = (osPriority)osPriorityNormal7,
+	.stack_size = 128* 20,
+	.priority = (osPriority)osPriorityAboveNormal,
 };
 
 //觸控檢測線程
@@ -98,7 +98,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   */
 void MX_FREERTOS_Init(void) {
 	/* USER CODE BEGIN Init */
-	printf("free heap: %d\r\n", xPortGetFreeHeapSize());
+	printf("rtos initing... free heap: %dbytes\r\n", xPortGetFreeHeapSize());
 	/* USER CODE END Init */
 
 	/* USER CODE BEGIN RTOS_MUTEX */
@@ -144,7 +144,7 @@ void MX_FREERTOS_Init(void) {
 	/* USER CODE BEGIN RTOS_EVENTS */
 	/* add events, ... */
 	/* USER CODE END RTOS_EVENTS */
-	printf("free heap: %d\r\n", xPortGetFreeHeapSize());
+	printf("tasks initialized. free heap: %dbytes\r\n", xPortGetFreeHeapSize());
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */

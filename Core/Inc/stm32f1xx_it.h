@@ -28,6 +28,7 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "esp32.h"
+#include "fileTask.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

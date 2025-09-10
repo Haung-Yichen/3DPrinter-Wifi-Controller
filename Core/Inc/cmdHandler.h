@@ -10,13 +10,13 @@
 
 //建立或執行命令時錯誤種類枚舉
 typedef enum CmdHandlerErrStat_Typedef {
-	CMD_OK = 0, //正常
-	QTY_OVER, //超過命令數量限制
-	NAME_ERR, //命令命名錯誤
-	CALBCK_ERR, //回調函數無效
-	REPEAT_ERR, //命令名稱重複
-	CMD_ERR, //命領無效
-	EXC_ERR //執行錯誤
+	CMD_OK = 0,  //正常
+	QTY_OVER,    //超過命令數量限制
+	NAME_ERR,    //命令命名錯誤
+	CALBCK_ERR,  //回調函數無效
+	REPEAT_ERR,  //命令名稱重複
+	CMD_ERR,	 //命領無效
+	EXC_ERR		 //執行錯誤
 } CmdHandlerStat;
 
 #ifdef __cplusplus
@@ -53,9 +53,9 @@ bool isReqCmd(const char cmd);
 /**
  * @brief 判斷是否為合法指令，只檢查命令本身而不檢查參數
  * @param cmd
- * @return 合法為1
+ * @return CmdHandlerStat
  */
-bool isValidCmd(const char *cmd);
+CmdHandlerStat isValidCmd(const char *cmd);
 
 /**
  * 從命令字串中提取 <> 內的參數

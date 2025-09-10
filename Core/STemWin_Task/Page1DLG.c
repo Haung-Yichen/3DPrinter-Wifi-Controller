@@ -24,6 +24,7 @@
 #include <stdio.h>
 
 #include "DIALOG.h"
+#include "printerController.h"
 
 /*********************************************************************
 *
@@ -101,9 +102,6 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
       case WM_NOTIFICATION_CLICKED:
         // USER START (Optionally insert code for reacting on notification message)
         // 顯示檔案選擇彈窗，選完檔案後將檔案作為參數傳進命令對列中讓execute_command處理
-
-
-
 
         // USER END
         break;

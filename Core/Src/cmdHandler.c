@@ -38,27 +38,21 @@ CmdHandlerStat register_command(const char *cmdName, CommandCallback callback) {
 CmdHandlerStat execute_command(const char *cmd, void *res) {
 	if (cmd == NULL) return CMD_ERR;
 
-	const char *spacePos = strchr(cmd, ' ');
 	char cmdName[MAX_CMD_LEN] = {0};
-	const char *args = "";
+	size_t cmdLen;
 
-	if (spacePos) {
-		size_t len = (size_t) (spacePos - cmd);
-		if (len >= MAX_CMD_LEN) len = MAX_CMD_LEN - 1;
-		strncpy(cmdName, cmd, len);
-		cmdName[len] = '\0';
-		args = spacePos + 1;
-	} else {
-		strncpy(cmdName, cmd, MAX_CMD_LEN - 1);
-		cmdName[MAX_CMD_LEN - 1] = '\0';
-	}
-
+	// 查找命令表中的匹配命令
 	for (uint8_t i = 0; i < cmdQty; ++i) {
-		if (strcmp(commands[i].cmdName, cmdName) == 0) {
-			commands[i].callback(args, res);
+		cmdLen = strlen(commands[i].cmdName);
+		if (strncmp(cmd, commands[i].cmdName, cmdLen) == 0) {
+			strncpy(cmdName, cmd, cmdLen);
+			cmdName[cmdLen] = '\0';
+			printf("%s is running...\r\n", cmdName);
+			commands[i].callback(cmd, res);
 			return CMD_OK;
 		}
 	}
+	printf("No matching command found for %s\r\n", cmd); // 除錯
 	return EXC_ERR;
 }
 
@@ -66,13 +60,13 @@ bool isReqCmd(const char cmd) {
 	return strstr(&cmd, (const char *) "CReq");
 }
 
-bool isValidCmd(const char *cmd) {
+CmdHandlerStat isValidCmd(const char *cmd) {
 	for (int i = 0; i < cmdQty; ++i) {
 		if (0 == strncmp(commands[i].cmdName, cmd, strlen(commands[i].cmdName))) {
-			return true;
+			return CMD_OK;
 		}
 	}
-	return false;
+	return CMD_ERR;
 }
 
 bool extract_parameter(const char *input, char *output, size_t max_len) {

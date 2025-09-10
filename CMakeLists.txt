@@ -178,6 +178,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         Core/STemWin_Task/Touch_Calibration.h
         Core/Inc/printerController.h
         Core/Src/printerController.c
+        Core/Inc/fileTask.h
+        Core/Src/fileTask.c
 )
 
 # Add STM32CubeMX generated sources

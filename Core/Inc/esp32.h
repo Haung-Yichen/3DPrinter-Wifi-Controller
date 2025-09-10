@@ -13,23 +13,26 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
+
 #include "FreeRTOS.h"
 #include "semphr.h"
+#include "Fatfs_SDIO.h"
 #include "usart.h"
+
 #include "cmdList.h"
 #include "cmdHandler.h"
 #include "printerController.h"
-#include "Fatfs_SDIO.h"
+#include "fileTask.h"
 
-#define ESP32_USART_PORT		 huart2              //正確是huart2 先用huart1調試
+
+#define ESP32_USART_PORT		 huart1              //正確是huart2 先用huart1調試
 #define ESP32_OK				 "ok\n"                //用於與esp32同步狀態
 #define ESP32_DISCONNECTED		 "wifi disconnected" //esp32 wifi異常會發送
 #define ESP32_OVER				 0                   //用於檢查是否收到CMD_Transmisson_Over
-#define rXBUF_SIZE				 (300)
-#define FILENAME_SIZE			 20                  //用於創建檔案時規範
-#define SHA256_HASH_SIZE         256
-#define SD_RTY_TIMES			 5                   //sd寫檔重試次數
+#define RXBUF_SIZE				 300
+#define CMD_BUF_SIZE		     300
 #define WAIT_ESP32_READY_TIMEOUT 10                  //最大等待ESP32初始化時間
+#define ESP32_RECV_DELAY         100
 
 typedef enum {
 	ESP32_INIT = 0,
@@ -37,16 +40,14 @@ typedef enum {
 	ESP32_BUSY
 } ESP32_STATE_TypeDef;
 
-extern SemaphoreHandle_t traOverSemaphore; //傳檔完成信號量
-extern SemaphoreHandle_t staPriSemaphore;  //開始列印信號量
-extern SemaphoreHandle_t rxSemaphore;      //UART啟動解析信號量
-extern QueueHandle_t cmdQueue;             //存放命令
-
+extern SemaphoreHandle_t cmdSemaphore;        //UART啟動解析信號量
+extern SemaphoreHandle_t recvSemaphore;       //通知可以開始接收
+// extern QueueHandle_t cmdQueue;             //存放命令
 
 // 內部狀態與緩衝區
 extern volatile uint16_t rxLen;
-extern uint8_t *ResBuf;                 //回調函數傳回結果緩衝區
-extern char rxBuf[rXBUF_SIZE];        //接收緩衝區
+extern char rxBuf[RXBUF_SIZE];             //uart接收緩衝區
+extern char cmdBuf[CMD_BUF_SIZE];          //命令接收緩衝區
 static ESP32_STATE_TypeDef currentState = ESP32_INIT;
 
 /**
@@ -74,11 +75,6 @@ void ESP32_SetState(ESP32_STATE_TypeDef state);
  */
 void ESP32_RxHandler_Task(void *argument);
 
-/**
- * @brief 回傳查詢的資料給ESP32
- */
-void ESP32_ReturnClbkRes(void);
-
 /************************************************
 *                 定義回調函數                  *
 ************************************************/
@@ -92,4 +88,12 @@ void StartTransmissionCmdHandler(const char *args, void *res);
  * @brief 命令：傳輸結束（command 觸發器）
  */
 void TransmissionOverCmdHandler(const char *args, void *res);
+
+/**
+ * @brief 命令： 設定檔名
+ */
+void SetFileNameCmdHandler(const char *args, void *res);
+
+HAL_StatusTypeDef reportOK_2_ESP32(void);
+
 #endif /* _ESP32_H_ */
