@@ -25,7 +25,7 @@
 #include "fileTask.h"
 
 
-#define ESP32_USART_PORT		 huart1              //正確是huart2 先用huart1調試
+#define ESP32_USART_PORT		 huart2              //正確是huart2 先用huart1調試
 #define ESP32_OK				 "ok\n"                //用於與esp32同步狀態
 #define ESP32_DISCONNECTED		 "wifi disconnected" //esp32 wifi異常會發送
 #define ESP32_OVER				 0                   //用於檢查是否收到CMD_Transmisson_Over

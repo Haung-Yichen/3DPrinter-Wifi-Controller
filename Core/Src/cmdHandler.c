@@ -47,17 +47,18 @@ CmdHandlerStat execute_command(const char *cmd, void *res) {
 		if (strncmp(cmd, commands[i].cmdName, cmdLen) == 0) {
 			strncpy(cmdName, cmd, cmdLen);
 			cmdName[cmdLen] = '\0';
-			printf("%s is running...\r\n", cmdName);
+			printf("%-20s %s is running...\r\n", "[cmdHandler.c]", cmdName);
 			commands[i].callback(cmd, res);
 			return CMD_OK;
 		}
 	}
-	printf("No matching command found for %s\r\n", cmd); // 除錯
+	printf("%-20s No matching command found for %s\r\n", "[cmdHandler.c]", cmd); // 除錯
 	return EXC_ERR;
 }
 
-bool isReqCmd(const char cmd) {
-	return strstr(&cmd, (const char *) "CReq");
+bool isReqCmd(const char *cmd) {
+	if (cmd == NULL) return false;
+	return strstr(cmd, (const char *) "CReq");
 }
 
 CmdHandlerStat isValidCmd(const char *cmd) {
@@ -107,7 +108,7 @@ bool extract_parameter(const char *input, char *output, size_t max_len) {
 #ifdef DEBUG
 void print_all_cmd(void) {
 	for (uint8_t i = 0; i < cmdQty; ++i) {
-		printf("%s\n", commands[i].cmdName);
+		printf("%-20s %s\n", commands[i].cmdName);
 	}
 }
 #endif

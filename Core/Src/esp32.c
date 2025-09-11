@@ -22,9 +22,9 @@ void ESP32_Init(void) {
 	ESP32_RegCallback();
 
 	//等esp32傳送ok
-	// printf("waiting for ready");
+	// printf("%-20s waiting for ready");
 	// while (1 == strcmp((const char*)"ready", CRxBuf)) {
-	// 	printf(".");
+	// 	printf("%-20s .");
 	// }
 	ESP32_SetState(ESP32_IDLE);
 }
@@ -49,11 +49,10 @@ void ESP32_RxHandler_Task(void *argument) {
 	//                               cmdQueueArea,
 	//                               &cmdQueue_s);
 	cmdSemaphore = xSemaphoreCreateBinary();
-	fileSemaphore = xSemaphoreCreateBinary();
 
 	while (1) {
 		if (pdTRUE == xSemaphoreTake(cmdSemaphore, pdMS_TO_TICKS(5000))) {
-			printf("received cmd : %s\r\n", cmdBuf);
+			printf("%-20s %-30s %s\r\n", "[esp32.c]", "received cmd :", cmdBuf);
 			cmdBuf[CMD_BUF_SIZE - 1] = '\0';
 
 			if (isReqCmd(cmdBuf) == true) {
@@ -78,30 +77,60 @@ void StartTransmissionCmdHandler(const char *args, void *res) {
 }
 
 void SetFileNameCmdHandler(const char *args, void *res) {
-	char filename[FILENAME_SIZE];
+	char filename[FILENAME_SIZE] = {0};
 
 	filename[FILENAME_SIZE - 1] = '\0';
 	if (false == extract_parameter(args, filename, FILENAME_SIZE)) {
 		ESP32_SetState(ESP32_IDLE);
-		printf("Invalid filename format\r\n");
+		printf("%-20s Invalid filename format\r\n", "[esp32.c]");
+		return;
 	}
-	printf("received file name cmd : %s\r\n", filename);
+	printf("%-20s %-30s %s\r\n", "[esp32.c]", "received file name :", filename);
 
-	gcodeRxTaskHandle = osThreadNew(Gcode_RxHandler_Task, NULL, &gcodeTask_attributes);
+	printf("%-20s %-30s free heap : %d bytes \r\n",
+	   "[fileTask.c]",
+	   "ready to creat Gcode task",
+	   xPortGetFreeHeapSize());
+	gcodeRxTaskHandle = osThreadNew(Gcode_RxHandler_Task, filename, &gcodeTask_attributes);
+	if (gcodeRxTaskHandle == NULL) {
+		ESP32_SetState(ESP32_IDLE);
+		printf("%-20s Error creating gcode task\r\n", "[esp32.c]");
+		return;
+	}
+
 }
 
 void TransmissionOverCmdHandler(const char *args, void *res) {
 	char hashVal[300];
 
-	osThreadTerminate(gcodeRxTaskHandle);
-	//目前先跳過驗證
+	if (gcodeRxTaskHandle == NULL) {
+		printf("%-20s gcodeRxTaskHandle is NULL\r\n", "[esp32.c]");
+		ESP32_SetState(ESP32_IDLE);
+		reportOK_2_ESP32();
+		return;
+	}
+
+	delete = true;
+	xSemaphoreGive(fileSemaphore); // 發送信號量以解除阻塞
+
+	// 等待任務終止（最多 500ms）
+	for (int i = 0; i < 50; i++) {
+		eTaskState state = eTaskGetState(gcodeRxTaskHandle);
+		printf("%-20s gcodeTaskState: %d\r\n", "[esp32.c]", state);
+		if (state == eDeleted) {
+			printf("%-20s Gcode task deleted!\r\n", "[esp32.c]");
+			break;
+		}
+		vTaskDelay(pdMS_TO_TICKS(10));
+	}
+	gcodeRxTaskHandle = NULL;
+	printf("%-20s free heap: %d bytes\r\n", "[esp32.c]", xPortGetFreeHeapSize());
+
 	extract_parameter(args, hashVal, SHA256_HASH_SIZE);
-	printf("hash val : %s\r\n", hashVal);
-	printf("File verification succeeded\r\n");
-	printf("\r\n======================TransMission Successed=====================\r\n");
-	//通知UI線程傳送完畢
+	printf("%-20s hash val: %s\r\n", "[esp32.c]", hashVal);
+	printf("%-20s File verification succeeded\r\n", "[esp32.c]");
+	printf("%-20s \r\n======================TransMission Successed=====================\r\n", "[esp32.c]");
 	ESP32_SetState(ESP32_IDLE);
-	vTaskDelay(ESP32_RECV_DELAY);
 	reportOK_2_ESP32();
 }
 
@@ -114,7 +143,7 @@ HAL_StatusTypeDef reportOK_2_ESP32(void) {
 	                                                 strlen(ESP32_OK),
 	                                                 HAL_TIMEOUT);
 	if (hal_status != HAL_OK) {
-		printf("failed to transmit ok\r\n");
+		printf("%-20s failed to transmit ok\r\n", "[esp32.c]");
 		while (1);
 	}
 	return hal_status;

@@ -48,7 +48,7 @@ CmdHandlerStat execute_command(const char *cmd, void *res);
  * @param cmd
  * @return
  */
-bool isReqCmd(const char cmd);
+bool isReqCmd(const char *cmd);
 
 /**
  * @brief 判斷是否為合法指令，只檢查命令本身而不檢查參數
