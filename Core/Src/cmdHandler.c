@@ -11,7 +11,7 @@ typedef struct {
 static Command_Typedef commands[MAX_CMD_COUNT] = {0}; //存放所有命令
 static uint8_t cmdQty = 0; //目前命令數量
 
-CmdHandlerStat register_command(const char *cmdName, CommandCallback callback) {
+CmdHandlerStat_t register_command(const char *cmdName, CommandCallback callback) {
 	if (cmdQty >= MAX_CMD_COUNT) {
 		return QTY_OVER;
 	} else if (cmdName == NULL) {
@@ -35,7 +35,7 @@ CmdHandlerStat register_command(const char *cmdName, CommandCallback callback) {
 	return CMD_OK;
 }
 
-CmdHandlerStat execute_command(const char *cmd, void *res) {
+CmdHandlerStat_t execute_command(const char *cmd, void *res) {
 	if (cmd == NULL) return CMD_ERR;
 
 	char cmdName[MAX_CMD_LEN] = {0};
@@ -47,20 +47,21 @@ CmdHandlerStat execute_command(const char *cmd, void *res) {
 		if (strncmp(cmd, commands[i].cmdName, cmdLen) == 0) {
 			strncpy(cmdName, cmd, cmdLen);
 			cmdName[cmdLen] = '\0';
-			printf("%s is running...\r\n", cmdName);
+			printf("%-20s %s is running...\r\n", "[cmdHandler.c]", cmdName);
 			commands[i].callback(cmd, res);
 			return CMD_OK;
 		}
 	}
-	printf("No matching command found for %s\r\n", cmd); // 除錯
+	printf("%-20s No matching command found for %s\r\n", "[cmdHandler.c]", cmd); // 除錯
 	return EXC_ERR;
 }
 
-bool isReqCmd(const char cmd) {
-	return strstr(&cmd, (const char *) "CReq");
+bool isReqCmd(const char *cmd) {
+	if (cmd == NULL) return false;
+	return strstr(cmd, (const char *) "CReq");
 }
 
-CmdHandlerStat isValidCmd(const char *cmd) {
+CmdHandlerStat_t isValidCmd(const char *cmd) {
 	for (int i = 0; i < cmdQty; ++i) {
 		if (0 == strncmp(commands[i].cmdName, cmd, strlen(commands[i].cmdName))) {
 			return CMD_OK;
@@ -107,7 +108,7 @@ bool extract_parameter(const char *input, char *output, size_t max_len) {
 #ifdef DEBUG
 void print_all_cmd(void) {
 	for (uint8_t i = 0; i < cmdQty; ++i) {
-		printf("%s\n", commands[i].cmdName);
+		printf("%-20s %s\n", commands[i].cmdName);
 	}
 }
 #endif

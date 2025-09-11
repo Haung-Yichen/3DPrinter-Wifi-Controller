@@ -98,7 +98,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   */
 void MX_FREERTOS_Init(void) {
 	/* USER CODE BEGIN Init */
-	printf("rtos initing... free heap: %dbytes\r\n", xPortGetFreeHeapSize());
+	printf("%-20s %-30s free heap: %d bytes\r\n", "[freertos.c]", "rtos initing...", xPortGetFreeHeapSize());
 	/* USER CODE END Init */
 
 	/* USER CODE BEGIN RTOS_MUTEX */
@@ -127,16 +127,16 @@ void MX_FREERTOS_Init(void) {
 	//任務建立結果檢查
 #ifdef DEBUG
 	if (defaultTaskHandle == NULL) {
-		printf("defaultTaskHandle created failed!!\r\n");
+		printf("%-20s defaultTaskHandle created failed!!\r\n", "[freertos.c]");
 	}
 	if (UITaskHandle == NULL) {
-		printf("UITaskHandle created failed!!\r\n");
+		printf("%-20s UITaskHandle created failed!!\r\n", "[freertos.c]");
 	}
 	if (TouchTaskHandle == NULL) {
-		printf("TouchTaskHandle created failed!!\r\n");
+		printf("%-20s TouchTaskHandle created failed!!\r\n", "[freertos.c]");
 	}
 	if (esp32RxHandlerTaskHandle == NULL) {
-		printf("esp32RxHandlerTaskHandle created failed!!\r\n");
+		printf("%-20s esp32RxHandlerTaskHandle created failed!!\r\n", "[freertos.c]");
 	}
 #endif
 	/* USER CODE END RTOS_THREADS */
@@ -144,7 +144,7 @@ void MX_FREERTOS_Init(void) {
 	/* USER CODE BEGIN RTOS_EVENTS */
 	/* add events, ... */
 	/* USER CODE END RTOS_EVENTS */
-	printf("tasks initialized. free heap: %dbytes\r\n", xPortGetFreeHeapSize());
+	printf("%-20s %-30s free heap: %d bytes\r\n", "[freertos.c]", "tasks initialized.", xPortGetFreeHeapSize());
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -162,7 +162,7 @@ void StartDefaultTask(void *argument) {
 		size_t used_heap = configTOTAL_HEAP_SIZE - free_heap;
 		uint8_t usage_percent = (used_heap * 100) / configTOTAL_HEAP_SIZE;
 
-		// printf("Heap usage: %u%% (%u / %u bytes)\r\n", usage_percent, (unsigned int)used_heap, (unsigned int)configTOTAL_HEAP_SIZE);
+		// printf("%-20s Heap usage: %u%% (%u / %u bytes)\r\n", "[freertos.c]", usage_percent, (unsigned int)used_heap, (unsigned int)configTOTAL_HEAP_SIZE);
 	}
 }
 
@@ -175,7 +175,7 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 	taskDISABLE_INTERRUPTS();
 
 	/* 打印哪個任務溢出（需串口或日誌支持） */
-	printf("Stack overflow in task: %s\n", pcTaskName);
+	printf("%-20s Stack overflow in task: %s\n", pcTaskName);
 
 	/* 可以在這裡打開 LED 快速閃爍作為錯誤提示 */
 	// Error_LED_Blink();

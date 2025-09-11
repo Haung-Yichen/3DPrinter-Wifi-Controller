@@ -4,22 +4,26 @@
 #include "cmsis_os2.h"
 #include "FreeRTOS.h"
 #include "semphr.h"
-#include "task.h"
+#include "ff.h"
+// #include "cmox_sha256.h"
+// #include "cmox_init.h"
 
 #include "esp32.h"
-#include "ff.h"
+
 
 #define FILENAME_SIZE			 20                  //用於創建檔案時規範
 #define SHA256_HASH_SIZE         256
-#define FILE_BUF_SIZE			 100
+#define FILE_BUF_SIZE			 300
 #define SD_RTY_TIMES			 5                   //sd寫檔重試次數
 
 extern SemaphoreHandle_t fileSemaphore; //用來通知是否收到檔案
 extern osThreadId_t gcodeRxTaskHandle;
 extern const osThreadAttr_t gcodeTask_attributes;
 
+extern char hashVal[100];
 extern char fileBuf[FILE_BUF_SIZE];
-extern volatile uint8_t fileLen;
+extern volatile uint16_t fileLen;
+extern volatile bool delete;
 
 /**
  * @brief 檔案接收任務，接收來自ESP32 UART的GCODE

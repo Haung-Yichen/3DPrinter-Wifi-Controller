@@ -25,7 +25,7 @@
 #include "fileTask.h"
 
 
-#define ESP32_USART_PORT		 huart1              //正確是huart2 先用huart1調試
+#define ESP32_USART_PORT		 huart2              //正確是huart2 先用huart1調試
 #define ESP32_OK				 "ok\n"                //用於與esp32同步狀態
 #define ESP32_DISCONNECTED		 "wifi disconnected" //esp32 wifi異常會發送
 #define ESP32_OVER				 0                   //用於檢查是否收到CMD_Transmisson_Over
@@ -82,17 +82,17 @@ void ESP32_RxHandler_Task(void *argument);
 /**
  * @brief 命令 : 準備接收dcode
  */
-void StartTransmissionCmdHandler(const char *args, void *res);
+void StartTransmissionCmdHandler(const char *args, ResStruct_t* _resStruct);
 
 /**
  * @brief 命令：傳輸結束（command 觸發器）
  */
-void TransmissionOverCmdHandler(const char *args, void *res);
+void TransmissionOverCmdHandler(const char *args, ResStruct_t* _resStruct);
 
 /**
  * @brief 命令： 設定檔名
  */
-void SetFileNameCmdHandler(const char *args, void *res);
+void SetFileNameCmdHandler(const char *args, ResStruct_t* _resStruct);
 
 HAL_StatusTypeDef reportOK_2_ESP32(void);
 

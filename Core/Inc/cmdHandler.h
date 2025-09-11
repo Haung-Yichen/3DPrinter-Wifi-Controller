@@ -9,7 +9,7 @@
 #define MAX_CMD_LEN   20	//單條命令字元數
 
 //建立或執行命令時錯誤種類枚舉
-typedef enum CmdHandlerErrStat_Typedef {
+typedef enum {
 	CMD_OK = 0,  //正常
 	QTY_OVER,    //超過命令數量限制
 	NAME_ERR,    //命令命名錯誤
@@ -17,14 +17,26 @@ typedef enum CmdHandlerErrStat_Typedef {
 	REPEAT_ERR,  //命令名稱重複
 	CMD_ERR,	 //命領無效
 	EXC_ERR		 //執行錯誤
-} CmdHandlerStat;
+} CmdHandlerStat_t;
+
+typedef enum {
+	TO_ESP32 = 0,
+	TO_CALLER
+}DateDir_t;
+
+typedef struct {
+	DateDir_t dir;
+	char resBuf[10];
+}ResStruct_t;
+
+extern ResStruct_t* resStruct;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /*  回調函數原型定義  */
-typedef void (*CommandCallback)(const char *args, void *res);
+typedef void (*CommandCallback)(const char *args, ResStruct_t* _resStruct);
 
 /**
  *@brief 註冊命令
@@ -32,7 +44,7 @@ typedef void (*CommandCallback)(const char *args, void *res);
  * @param callback   實際執行命令的callback func
  * @return           命令註冊狀態
  */
-CmdHandlerStat register_command(const char *cmdName, CommandCallback callback);
+CmdHandlerStat_t register_command(const char *cmdName, CommandCallback callback);
 
 /**
  *@brief 執行命令，放在命令處理線程裡
@@ -41,21 +53,21 @@ CmdHandlerStat register_command(const char *cmdName, CommandCallback callback);
  * @param res		回傳參數的存放變數位址
  * @return			命令執行狀態
  */
-CmdHandlerStat execute_command(const char *cmd, void *res);
+CmdHandlerStat_t execute_command(const char *cmd, void *res);
 
 /**
  * @brief 判斷命令是否需要返回值
  * @param cmd
  * @return
  */
-bool isReqCmd(const char cmd);
+bool isReqCmd(const char *cmd);
 
 /**
  * @brief 判斷是否為合法指令，只檢查命令本身而不檢查參數
  * @param cmd
  * @return CmdHandlerStat
  */
-CmdHandlerStat isValidCmd(const char *cmd);
+CmdHandlerStat_t isValidCmd(const char *cmd);
 
 /**
  * 從命令字串中提取 <> 內的參數

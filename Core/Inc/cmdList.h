@@ -37,6 +37,8 @@
 #define CMD_GetFilament_Weight  (const char*)"cReqFilamentWeight" //請求耗材重量
 #define CMD_Emergency_Stop      (const char*)"cEmergencyStop"     //緊急停止
 
+
+
 /*            錯誤碼            */
 #define ERROR_PARAM_REQ         (const char*)"eParamReq"          //參數查詢錯誤
 #define ERROR_FILE_BROKEN       (const char*)"eFileBroken"        //檔案錯誤

@@ -229,7 +229,8 @@ void USART1_IRQHandler(void) {
 		cmdBuf[CMD_BUF_SIZE - 1] = '\0';
 		fileBuf[FILE_BUF_SIZE - 1] = '\0';
 
-		if (rxBuf[0] == 'c') { //判斷數據是不是命令
+		if (rxBuf[0] == 'c') {
+			//判斷數據是不是命令
 			if (isValidCmd(rxBuf) == CMD_OK) {
 				strncpy(cmdBuf, rxBuf, rxLen);
 
@@ -237,17 +238,18 @@ void USART1_IRQHandler(void) {
 				xSemaphoreGiveFromISR(cmdSemaphore, &xHigherPriorityTaskWoken);
 				portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 			} else {
-				printf("unvalid cmd\r\n");
+				printf("%-20s unvalid cmd\r\n", "[f1xx_it.c]");
 				UART_SendString_DMA("eCMDError\r\n");
 			}
-		} else {                                          //否則就是檔案數據
+		} else {
+			//否則就是檔案數據
 			fileLen = rxLen;
 			strncpy(fileBuf, rxBuf, rxLen);
 			xSemaphoreGiveFromISR(fileSemaphore, &xHigherPriorityTaskWoken);
 			portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 		}
-		restart:
-				rxLen = 0;
+	restart:
+		rxLen = 0;
 		memset(rxBuf, 0, sizeof(rxBuf));
 		HAL_UART_Receive_DMA(&ESP32_USART_PORT, rxBuf, sizeof(rxBuf));
 	}
@@ -271,7 +273,9 @@ void USART2_IRQHandler(void) {
 		cmdBuf[CMD_BUF_SIZE - 1] = '\0';
 		fileBuf[FILE_BUF_SIZE - 1] = '\0';
 
-		if (rxBuf[0] == 'c') { //判斷數據是不是命令
+		// printf("%-20s rxBuf : %s\r\n", "[f1xx_it.c]", rxBuf);
+		if (rxBuf[0] == 'c') {
+			//判斷數據是不是命令
 			if (isValidCmd(rxBuf) == CMD_OK) {
 				strncpy(cmdBuf, rxBuf, rxLen);
 
@@ -279,18 +283,23 @@ void USART2_IRQHandler(void) {
 				xSemaphoreGiveFromISR(cmdSemaphore, &xHigherPriorityTaskWoken);
 				portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 			} else {
-				printf("unvalid cmd\r\n");
+				printf("%-20s unvalid cmd\r\n", "[f1xx_it.c]");
 				UART_SendString_DMA("eCMDError\r\n");
 			}
-		} else {                                          //否則就是檔案數據
-			fileLen = rxLen;
-			strncpy(fileBuf, rxBuf, rxLen);
-			xSemaphoreGiveFromISR(fileSemaphore, &xHigherPriorityTaskWoken);
-			portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+			goto restart;
 		}
-restart:
+		//否則就是檔案數據
+		uint16_t copy = (rxLen < (FILE_BUF_SIZE - 1)) ? rxLen : (FILE_BUF_SIZE - 1);
+		memcpy(fileBuf, rxBuf, copy);
+		fileBuf[copy] = '\0';
+		fileLen = copy;
+
+		xSemaphoreGiveFromISR(fileSemaphore, &xHigherPriorityTaskWoken);
+		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+
+	restart:
 		rxLen = 0;
-		memset(rxBuf, 0, sizeof(rxBuf));
+		memset(rxBuf, 0, RXBUF_SIZE);
 		HAL_UART_Receive_DMA(&ESP32_USART_PORT, rxBuf, sizeof(rxBuf));
 	}
 	HAL_UART_IRQHandler(&ESP32_USART_PORT); // 讓 HAL 處理其他 UART 相關的中斷

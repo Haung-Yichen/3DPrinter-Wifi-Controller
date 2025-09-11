@@ -42,62 +42,62 @@ void PC_PrintTask();
 /**
  * @brief 開始列印命令的處理函式
  */
-void StartToPrintCmdHandler(const char *args, void *res);
+void StartToPrintCmdHandler(const char *args, ResStruct_t* _resStruct);
 
 /**
  * @brief 暫停列印命令的處理函式
  */
-void PausePrintingCmdHandler(const char *args, void *res);
+void PausePrintingCmdHandler(const char *args, ResStruct_t* _resStruct);
 
 /**
  * @brief 停止列印命令的處理函式
  */
-void StopPrintingCmdHandler(const char *args, void *res);
+void StopPrintingCmdHandler(const char *args, ResStruct_t* _resStruct);
 
 /**
  * @brief 回到原點命令的處理函式
  */
-void GoHomeCmdHandler(const char *args, void *res);
+void GoHomeCmdHandler(const char *args, ResStruct_t* _resStruct);
 
 /**
  * @brief 請求剩餘列印時間命令的處理函式
  */
-void GetRemainingTimeCmdHandler(const char *args, void *res);
+void GetRemainingTimeCmdHandler(const char *args, ResStruct_t* _resStruct);
 
 /**
  * @brief 請求列印進度命令的處理函式
  */
-void GetProgressCmdHandler(const char *args, void *res);
+void GetProgressCmdHandler(const char *args, ResStruct_t* _resStruct);
 
 /**
  * @brief 請求噴嘴溫度命令的處理函式
  */
-void GetNozzleTempCmdHandler(const char *args, void *res);
+void GetNozzleTempCmdHandler(const char *args, ResStruct_t* _resStruct);
 
 /**
  * @brief 請求熱床溫度命令的處理函式
  */
-void GetBedTempCmdHandler(const char *args, void *res);
+void GetBedTempCmdHandler(const char *args, ResStruct_t* _resStruct);
 
 /**
  * @brief 設置噴嘴溫度命令的處理函式
  */
-void SetNozzleTempCmdHandler(const char *args, void *res);
+void SetNozzleTempCmdHandler(const char *args, ResStruct_t* _resStruct);
 
 /**
  * @brief 設置熱床溫度命令的處理函式
  */
-void SetBedTempCmdHandler(const char *args, void *res);
+void SetBedTempCmdHandler(const char *args, ResStruct_t* _resStruct);
 
 /**
  * @brief 請求耗材重量命令的處理函式
  */
-void GetFilamentWeightCmdHandler(const char *args, void *res);
+void GetFilamentWeightCmdHandler(const char *args, ResStruct_t* _resStruct);
 
 /**
  * @brief 緊急停止命令的處理函式
  */
-void EmergencyStopCmdHandler(const char *args, void *res);
+void EmergencyStopCmdHandler(const char *args, ResStruct_t* _resStruct);
 
 
 #ifdef __cplusplus
