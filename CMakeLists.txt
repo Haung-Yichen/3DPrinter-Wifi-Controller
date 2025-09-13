@@ -180,6 +180,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         Core/Src/printerController.c
         Core/Inc/fileTask.h
         Core/Src/fileTask.c
+        Core/sha256/sha256.h
+        Core/sha256/sha256.c
 )
 
 # Add STM32CubeMX generated sources
@@ -206,7 +208,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
 )
 
 # Add linked libraries
-target_link_libraries(${CMAKE_PROJECT_NAME}
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
         stm32cubemx
         # Add user defined libraries
 )

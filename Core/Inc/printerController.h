@@ -99,6 +99,8 @@ void GetFilamentWeightCmdHandler(const char *args, ResStruct_t* _resStruct);
  */
 void EmergencyStopCmdHandler(const char *args, ResStruct_t* _resStruct);
 
+//
+// void
 
 #ifdef __cplusplus
 }

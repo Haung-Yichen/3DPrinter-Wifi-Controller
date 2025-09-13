@@ -29,6 +29,7 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 #include "esp32.h"
 #include "fileTask.h"
+#include "gpio.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

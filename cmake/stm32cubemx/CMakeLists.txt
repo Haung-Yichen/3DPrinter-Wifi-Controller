@@ -15,6 +15,7 @@ set(MX_Include_Dirs
 		${CMAKE_SOURCE_DIR}/Core/FatFs/drivers
 		${CMAKE_SOURCE_DIR}/Core/sdio
 		${CMAKE_SOURCE_DIR}/Core/lcd
+		${CMAKE_SOURCE_DIR}/Core/sha256
 		${CMAKE_SOURCE_DIR}/Core/STemWin
 		${CMAKE_SOURCE_DIR}/Core/STemWin/Config
 		${CMAKE_SOURCE_DIR}/Core/STemWin/inc
@@ -92,10 +93,11 @@ set(MX_LINK_LIBS
 		${CMAKE_SOURCE_DIR}/Core/STemWin/Lib/STemWin_CM3_OS_wc16_ARGB.a
 )
 
+
 add_compile_definitions(DEBUG)
 
 add_library(stm32cubemx INTERFACE)
-target_include_directories(stm32cubemx INTERFACE ${MX_Include_Dirs})
+target_include_directories(stm32cubemx INTERFACE ${MX_Include_Dirs} ${CMOX_INCLUDE_DIR})
 target_compile_definitions(stm32cubemx INTERFACE ${MX_Defines_Syms})
 
 add_library(STM32_Drivers OBJECT)
@@ -106,11 +108,11 @@ add_library(FreeRTOS OBJECT)
 target_sources(FreeRTOS PRIVATE ${FreeRTOS_Src})
 target_link_libraries(FreeRTOS PUBLIC stm32cubemx)
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${MX_Application_Src})
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${MX_Application_Src} ${CMOX_Sources})
 
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE ${MX_LINK_DIRS})
 
-target_link_libraries(${CMAKE_PROJECT_NAME} ${MX_LINK_LIBS})
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${MX_LINK_LIBS})
 
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES ADDITIONAL_CLEAN_FILES ${CMAKE_PROJECT_NAME}.map)
 

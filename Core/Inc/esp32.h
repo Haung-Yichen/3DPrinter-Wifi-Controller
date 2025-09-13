@@ -29,7 +29,7 @@
 #define ESP32_OK				 "ok\n"                //用於與esp32同步狀態
 #define ESP32_DISCONNECTED		 "wifi disconnected" //esp32 wifi異常會發送
 #define ESP32_OVER				 0                   //用於檢查是否收到CMD_Transmisson_Over
-#define RXBUF_SIZE				 300
+#define RXBUF_SIZE				 2048
 #define CMD_BUF_SIZE		     300
 #define WAIT_ESP32_READY_TIMEOUT 10                  //最大等待ESP32初始化時間
 #define ESP32_RECV_DELAY         100
@@ -48,6 +48,7 @@ extern SemaphoreHandle_t recvSemaphore;       //通知可以開始接收
 extern volatile uint16_t rxLen;
 extern char rxBuf[RXBUF_SIZE];             //uart接收緩衝區
 extern char cmdBuf[CMD_BUF_SIZE];          //命令接收緩衝區
+static char sha256_hash[256];
 static ESP32_STATE_TypeDef currentState = ESP32_INIT;
 
 /**
@@ -80,19 +81,24 @@ void ESP32_RxHandler_Task(void *argument);
 ************************************************/
 
 /**
+ * @brief 命令 : 處理esp32 wifi狀態
+ */
+void WifiStatusHandler(const char *args, ResStruct_t* _resStruct);
+
+/**
  * @brief 命令 : 準備接收dcode
  */
-void StartTransmissionCmdHandler(const char *args, ResStruct_t* _resStruct);
+void StartTransmissionHandler(const char *args, ResStruct_t* _resStruct);
 
 /**
  * @brief 命令：傳輸結束（command 觸發器）
  */
-void TransmissionOverCmdHandler(const char *args, ResStruct_t* _resStruct);
+void TransmissionOverHandler(const char *args, ResStruct_t* _resStruct);
 
 /**
  * @brief 命令： 設定檔名
  */
-void SetFileNameCmdHandler(const char *args, ResStruct_t* _resStruct);
+void SetFileNameHandler(const char *args, ResStruct_t* _resStruct);
 
 HAL_StatusTypeDef reportOK_2_ESP32(void);
 

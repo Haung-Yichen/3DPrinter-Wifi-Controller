@@ -228,7 +228,7 @@ void USART1_IRQHandler(void) {
 		rxBuf[rxLen] = '\0';
 		cmdBuf[CMD_BUF_SIZE - 1] = '\0';
 		fileBuf[FILE_BUF_SIZE - 1] = '\0';
-
+		printf("%-20s cmd : %s\r\n", "[f1xx_it.c]", rxBuf);
 		if (rxBuf[0] == 'c') {
 			//判斷數據是不是命令
 			if (isValidCmd(rxBuf) == CMD_OK) {
@@ -289,11 +289,8 @@ void USART2_IRQHandler(void) {
 			goto restart;
 		}
 		//否則就是檔案數據
-		uint16_t copy = (rxLen < (FILE_BUF_SIZE - 1)) ? rxLen : (FILE_BUF_SIZE - 1);
-		memcpy(fileBuf, rxBuf, copy);
-		fileBuf[copy] = '\0';
-		fileLen = copy;
-
+		fileLen = rxLen;
+		strncpy(fileBuf, rxBuf, rxLen);
 		xSemaphoreGiveFromISR(fileSemaphore, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 
@@ -306,5 +303,10 @@ void USART2_IRQHandler(void) {
 }
 
 /* USER CODE BEGIN 1 */
-
+void UserKey_IRQHandler(void) {
+	if (__HAL_GPIO_EXTI_GET_IT(USER_KEY_PIN) != RESET) {
+		NVIC_SystemReset();
+		__HAL_GPIO_EXTI_CLEAR_IT(USER_KEY_EXTI_IRQn);
+	}
+}
 /* USER CODE END 1 */

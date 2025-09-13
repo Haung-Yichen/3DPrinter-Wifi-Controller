@@ -6,7 +6,7 @@ SemaphoreHandle_t fileSemaphore = NULL;
 
 const osThreadAttr_t gcodeTask_attributes = {
 	.name = "Gcode_Rx_Task",
-	.stack_size = 128 * 32,
+	.stack_size = 128 * 48,
 	.priority = (osPriority)osPriorityHigh5,
 };
 
@@ -14,7 +14,6 @@ char hashVal[100] = {0};
 char fileBuf[FILE_BUF_SIZE] = {0};
 volatile uint16_t fileLen = 0;
 volatile bool delete = false;
-// cmox_hash_handle_t* hashHandle = NULL;
 
 /**
  * @brief 刪除任務 並自動刪除指針
@@ -25,16 +24,18 @@ void Gcode_RxHandler_Task(void *argument) {
 	FIL tmpFile;
 	FRESULT f_res;
 	UINT fnum;
+	// SHA256_CTX sha256_ctx;
 
-	// cmox_sha256_handle_t sha256Handle;
 	uint32_t i = 0; // 檔案接收行數計數器
+	uint32_t fnumCount = 0;
+	uint32_t timer = 0;
 	char filename[FILENAME_SIZE] = {0};
 	bool should_exit = false;
 	bool received_data = false;
 	bool done = false;
 
-	// 初始化cmox sha256
-	// hashHandle = cmox_sha256_construct(&sha256Handle);
+
+	// sha256_init(&sha256_ctx);
 	fileSemaphore = xSemaphoreCreateBinary();
 
 	printf("%-20s %-30s free heap : %d bytes \r\n",
@@ -42,20 +43,13 @@ void Gcode_RxHandler_Task(void *argument) {
 	   "Gcode_RxHandler_Task created!",
 	   xPortGetFreeHeapSize());
 
-	// 初始化cmox 檢查資源有效值
-	// if (cmox_initialize(NULL) != CMOX_INIT_SUCCESS) {
-	// 	printf("%-20s Failed to initialize CMOX library\r\n", "[fileTask.c]");
-	// 	deleteTask();
-	// } else if (hashHandle == NULL) {
-	// 	printf("%-20s Failed to init SHA256 handle\r\n", "[fileTask.c]");
-	// 	deleteTask();
-	// } else if (fileSemaphore == NULL) {
-	// 	printf("%-20s failed to creat fileSemaphore!\r\n", "[fileTask.c]");
-	// 	deleteTask();
-	// } else if (argument == NULL) {
-	// 	printf("%-20s argument is NULL\r\n", "[fileTask.c]");
-	// 	deleteTask();
-	// }
+	if (fileSemaphore == NULL) {
+		printf("%-20s failed to creat fileSemaphore!\r\n", "[fileTask.c]");
+		deleteTask();
+	} else if (argument == NULL) {
+		printf("%-20s argument is NULL\r\n", "[fileTask.c]");
+		deleteTask();
+	}
 
 	memset(filename, 0, FILENAME_SIZE);
 	strcpy(filename, argument);
@@ -74,6 +68,7 @@ void Gcode_RxHandler_Task(void *argument) {
 		f_close(&tmpFile); // 關閉檔案
 		deleteTask();
 	}
+	timer = xTaskGetTickCount();
 	vTaskDelay(ESP32_RECV_DELAY);
 	reportOK_2_ESP32();
 
@@ -81,6 +76,10 @@ void Gcode_RxHandler_Task(void *argument) {
 		if (should_exit == true || delete == true) {
 			f_close(&tmpFile);
 			delete = false;
+			printf("%-20s fnumCount : %d\r\n", "[fileTask.c]", fnumCount);
+			printf("%-20s total time : %ds\r\n",
+				   "[fileTask.c]",
+				   (xTaskGetTickCount() - timer) / 1000);
 			deleteTask();
 		}
 		//==================開始接收==================//
@@ -94,17 +93,18 @@ void Gcode_RxHandler_Task(void *argument) {
 				printf_fatfs_error(f_res);
 				should_exit = true;
 			}
+			fnumCount += fnum;
 			if (i >= 16) {
 				i = 0;
 				f_sync(&tmpFile);
 			}
 
-			printf("%s", fileBuf);
+			// printf("%s", fileBuf);
 			memset(fileBuf, 0, FILE_BUF_SIZE);
 		} else {
 			continue;
 		}
-		vTaskDelay(pdMS_TO_TICKS(1));
+		// vTaskDelay(pdMS_TO_TICKS(1));
 	} // while
 } // task
 

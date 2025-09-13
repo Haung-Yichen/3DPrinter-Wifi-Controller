@@ -19,8 +19,9 @@
 #define INC_COMMAND_LIST_H_
 
 /*            命令            */
-#define CMD_Start_Transmisson   (const char*)"cStartTransmission"  //開始傳送(檔案)
-#define CMD_Transmisson_Over    (const char*)"cTransmissionOver"   //傳送完畢(檔案)
+#define CMD_WIFI_STATUS         (const char*)"cWifiStatus"        //wifi狀態設定
+#define CMD_Start_Transmisson   (const char*)"cStartTransmission" //開始傳送(檔案)
+#define CMD_Transmisson_Over    (const char*)"cTransmissionOver"  //傳送完畢(檔案)
 #define CMD_SET_FILENAME        (const char*)"cSetFilename"       //設置檔名
 #define CMD_Start_To_Print      (const char*)"cStartToPrint"      //開始列印
 #define CMD_Pause_Printing      (const char*)"cPausePrinting"     //暫停列印S

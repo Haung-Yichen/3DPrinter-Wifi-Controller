@@ -35,7 +35,7 @@ CmdHandlerStat_t register_command(const char *cmdName, CommandCallback callback)
 	return CMD_OK;
 }
 
-CmdHandlerStat_t execute_command(const char *cmd, void *res) {
+CmdHandlerStat_t execute_command(const char *cmd, ResStruct_t* _resStruct) {
 	if (cmd == NULL) return CMD_ERR;
 
 	char cmdName[MAX_CMD_LEN] = {0};
@@ -48,7 +48,7 @@ CmdHandlerStat_t execute_command(const char *cmd, void *res) {
 			strncpy(cmdName, cmd, cmdLen);
 			cmdName[cmdLen] = '\0';
 			printf("%-20s %s is running...\r\n", "[cmdHandler.c]", cmdName);
-			commands[i].callback(cmd, res);
+			commands[i].callback(cmd, _resStruct);
 			return CMD_OK;
 		}
 	}

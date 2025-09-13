@@ -69,7 +69,7 @@ const osThreadAttr_t Touch_Task_attributes = {
 osThreadId_t esp32RxHandlerTaskHandle;
 const osThreadAttr_t esp32RxHandlerTask_attributes = {
 	.name = "esp32RxTask",
-	.stack_size = 128 * 36,
+	.stack_size = 128 * 30,
 	.priority = (osPriority) osPriorityHigh,
 };
 

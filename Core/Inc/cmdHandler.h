@@ -49,11 +49,11 @@ CmdHandlerStat_t register_command(const char *cmdName, CommandCallback callback)
 /**
  *@brief 執行命令，放在命令處理線程裡
  *		 解析完命令後呼叫實際callback func執行
- * @param cmd		命令 用空格分割參數
- * @param res		回傳參數的存放變數位址
- * @return			命令執行狀態
+ * @param cmd		 命令 用空格分割參數
+ * @param _resStruct 回傳參數結構體
+ * @return			 命令執行狀態
  */
-CmdHandlerStat_t execute_command(const char *cmd, void *res);
+CmdHandlerStat_t execute_command(const char *cmd, ResStruct_t* _resStruct);
 
 /**
  * @brief 判斷命令是否需要返回值

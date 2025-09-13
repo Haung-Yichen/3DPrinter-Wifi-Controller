@@ -30,9 +30,10 @@ void ESP32_Init(void) {
 }
 
 void ESP32_RegCallback(void) {
-	register_command(CMD_Start_Transmisson, StartTransmissionCmdHandler);
-	register_command(CMD_Transmisson_Over, TransmissionOverCmdHandler);
-	register_command(CMD_SET_FILENAME, SetFileNameCmdHandler);
+	register_command(CMD_WIFI_STATUS, WifiStatusHandler);
+	register_command(CMD_Start_Transmisson, StartTransmissionHandler);
+	register_command(CMD_Transmisson_Over, TransmissionOverHandler);
+	register_command(CMD_SET_FILENAME, SetFileNameHandler);
 }
 
 ESP32_STATE_TypeDef ESP32_GetState(void) {
@@ -52,7 +53,7 @@ void ESP32_RxHandler_Task(void *argument) {
 
 	while (1) {
 		if (pdTRUE == xSemaphoreTake(cmdSemaphore, pdMS_TO_TICKS(5000))) {
-			printf("%-20s %-30s %s\r\n", "[esp32.c]", "received cmd :", cmdBuf);
+			// printf("%-20s %-30s %s\r\n", "[esp32.c]", "received cmd :", cmdBuf);
 			cmdBuf[CMD_BUF_SIZE - 1] = '\0';
 
 			if (isReqCmd(cmdBuf) == true) {
@@ -70,13 +71,26 @@ void ESP32_RxHandler_Task(void *argument) {
 	}
 }
 
-void StartTransmissionCmdHandler(const char *args, ResStruct_t* _resStruct) {
+void WifiStatusHandler(const char *args, ResStruct_t* _resStruct) {
+	char wifiStatus[20] = {0};
+	char ip[20] = {0};
+
+	extract_parameter(args, wifiStatus, 20);
+	if (wifiStatus[0] == '1') {
+		strncpy(ip, wifiStatus+1, 20);
+		printf("%-20s Wifi connected @ %s\r\n", "[esp32.c]", ip);;
+	} else {
+		printf("%-20s Wifi disconnected\r\n", "[esp32.c]");;
+	}
+}
+
+void StartTransmissionHandler(const char *args, ResStruct_t* _resStruct) {
 	ESP32_SetState(ESP32_BUSY);
 	vTaskDelay(ESP32_RECV_DELAY);
 	reportOK_2_ESP32();
 }
 
-void SetFileNameCmdHandler(const char *args, ResStruct_t* _resStruct) {
+void SetFileNameHandler(const char *args, ResStruct_t* _resStruct) {
 	char filename[FILENAME_SIZE] = {0};
 
 	filename[FILENAME_SIZE - 1] = '\0';
@@ -100,7 +114,7 @@ void SetFileNameCmdHandler(const char *args, ResStruct_t* _resStruct) {
 	}
 }
 
-void TransmissionOverCmdHandler(const char *args, ResStruct_t* _resStruct) {
+void TransmissionOverHandler(const char *args, ResStruct_t* _resStruct) {
 	if (gcodeRxTaskHandle == NULL) {
 		printf("%-20s gcodeRxTaskHandle is NULL\r\n", "[esp32.c]");
 		ESP32_SetState(ESP32_IDLE);
@@ -112,9 +126,9 @@ void TransmissionOverCmdHandler(const char *args, ResStruct_t* _resStruct) {
 	xSemaphoreGive(fileSemaphore); // 發送信號量以解除阻塞
 
 	// 等待任務終止（最多 500ms）
-	for (int i = 0; i < 50; i++) {
+	for (int i = 0; i < 200; i++) {
 		eTaskState state = eTaskGetState(gcodeRxTaskHandle);
-		printf("%-20s gcodeTaskState: %d\r\n", "[esp32.c]", state);
+		// printf("%-20s gcodeTaskState: %d\r\n", "[esp32.c]", state);
 		if (state == eDeleted) {
 			printf("%-20s Gcode task deleted!\r\n", "[esp32.c]");
 			break;
@@ -122,6 +136,7 @@ void TransmissionOverCmdHandler(const char *args, ResStruct_t* _resStruct) {
 		vTaskDelay(pdMS_TO_TICKS(10));
 	}
 	gcodeRxTaskHandle = NULL;
+	vTaskDelay(pdMS_TO_TICKS(100)); // 等待堆記憶體更新
 	printf("%-20s free heap: %d bytes\r\n", "[esp32.c]", xPortGetFreeHeapSize());
 
 	extract_parameter(args, hashVal, SHA256_HASH_SIZE);

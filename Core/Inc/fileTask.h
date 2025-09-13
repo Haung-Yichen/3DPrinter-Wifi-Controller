@@ -5,15 +5,12 @@
 #include "FreeRTOS.h"
 #include "semphr.h"
 #include "ff.h"
-// #include "cmox_sha256.h"
-// #include "cmox_init.h"
-
+#include "sha256.h"
 #include "esp32.h"
-
 
 #define FILENAME_SIZE			 20                  //用於創建檔案時規範
 #define SHA256_HASH_SIZE         256
-#define FILE_BUF_SIZE			 300
+#define FILE_BUF_SIZE			 2048
 #define SD_RTY_TIMES			 5                   //sd寫檔重試次數
 
 extern SemaphoreHandle_t fileSemaphore; //用來通知是否收到檔案
