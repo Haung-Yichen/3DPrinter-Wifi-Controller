@@ -153,7 +153,7 @@ void TransmissionOverHandler(const char *args, ResStruct_t* _resStruct) {
 	}
 	gcodeRxTaskHandle = NULL;
 	vTaskDelay(pdMS_TO_TICKS(100)); // 等待堆記憶體更新
-	printf("%-20s free heap: %d bytes\r\n", "[esp32.c]", xPortGetFreeHeapSize());
+	// printf("%-20s free heap: %d bytes\r\n", "[esp32.c]", xPortGetFreeHeapSize());
 
 	extract_parameter(args, srcHash, SHA256_HASH_SIZE);
 	// printf("%-20s hash val: %s\r\n", "[esp32.c]", hashVal);

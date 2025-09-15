@@ -32,12 +32,17 @@ extern "C" {
 #include "esp32.h"
 /* USER CODE END Includes */
 
-extern UART_HandleTypeDef huart1;
-extern UART_HandleTypeDef huart2;
-extern UART_HandleTypeDef huart3;
+extern UART_HandleTypeDef    huart1;
+extern UART_HandleTypeDef    huart2;
+extern UART_HandleTypeDef    huart3;
 
 /* USER CODE BEGIN Private defines */
-#define DEBUG_USART_PORT huart1
+#define DEBUG_USART_PORT     huart1
+#define ESP32_USART_PORT     huart2
+#define PRINTING_USART_PORT  huart3
+#define DEBUG_USART_BPS      1000000
+#define ESP32_USART_BPS      512000
+#define PRINTER_USART_BPS    250000
 /* USER CODE END Private defines */
 
 void MX_USART1_UART_Init(void);

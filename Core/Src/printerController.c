@@ -2,7 +2,6 @@
 
 #include "esp32.h"
 
-
 void PC_init(void) {
 	PC_RegCallback();
 }
@@ -55,6 +54,7 @@ void StartToPrintCmdHandler(const char *args, ResStruct_t* _resStruct) {
         }
         // 發送 G-code 到印表機
         printf("Sending: %s", gcode_line);
+    	// UART_SendString_DMA(&huart1, gcode_line);
 
         // HAL_StatusTypeDef uart_status = HAL_UART_Transmit(&huart3,
         //                                                  (uint8_t*)gcode_line,

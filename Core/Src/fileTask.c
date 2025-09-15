@@ -6,8 +6,8 @@ SemaphoreHandle_t fileSemaphore = NULL;
 
 const osThreadAttr_t gcodeTask_attributes = {
 	.name = "Gcode_Rx_Task",
-	.stack_size = 128 * 45,
-	.priority = (osPriority)osPriorityHigh5,
+	.stack_size = 128 * 56,
+	.priority = (osPriority)osPriorityHigh7,
 };
 
 char hashVal[SHA256_HASH_SIZE] = {0};
@@ -35,7 +35,6 @@ void Gcode_RxHandler_Task(void *argument) {
 	bool should_exit = false;
 	bool received_data = false;
 	bool done = false;
-
 
 	sha256_init(&sha256_ctx);
 	fileSemaphore = xSemaphoreCreateBinary();
@@ -99,16 +98,15 @@ void Gcode_RxHandler_Task(void *argument) {
 			}
 			fnumCount += fnum;
 			f_sync(&tmpFile); //1K刷新一次
-			if (i >= 10) {
-				i = 0;
-#ifdef DEBUG
-				//分析堆棧使用狀況
-				if (uxTaskGetStackHighWaterMark(NULL) < stackHighWaterMark) {
-					stackHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
-				}
-#endif
-			}
-			// printf("%s", fileBuf);
+// 			if (i >= 10) {
+// 				i = 0;
+// #ifdef DEBUG
+// 				//分析堆棧使用狀況
+// 				if (uxTaskGetStackHighWaterMark(NULL) < stackHighWaterMark) {
+// 					stackHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
+// 				}
+// #endif
+// 			}
 			memset(fileBuf, 0, FILE_BUF_SIZE);
 			fileLen = 0;
 		} else {
@@ -131,10 +129,11 @@ void Gcode_RxHandler_Task(void *argument) {
 			f_close(&tmpFile);
 			delete = false;
 			printf("%-20s fnumCount: %d\r\n", "[fileTask.c]", fnumCount);
-			printf("%-20s minimum stack size: %u\r\n", "[fileTask.c]", stackHighWaterMark);
+			// printf("%-20s minimum stack size: %u\r\n", "[fileTask.c]", stackHighWaterMark);
+			uint32_t tmp = xTaskGetTickCount() - timer;
 			printf("%-20s total time: %dms\r\n",
 				   "[fileTask.c]",
-				   xTaskGetTickCount() - timer);
+				   tmp);
 			deleteTask();
 		}
 		// vTaskDelay(pdMS_TO_TICKS(1));
