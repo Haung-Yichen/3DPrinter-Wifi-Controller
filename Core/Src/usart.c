@@ -55,7 +55,6 @@ void MX_USART1_UART_Init(void) {
 		Error_Handler();
 	}
 	/* USER CODE BEGIN USART1_Init 2 */
-
 	/* USER CODE END USART1_Init 2 */
 }
 
@@ -308,15 +307,10 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef *uartHandle) {
 	}
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	if (huart->Instance == USART1) {
-	} else if (huart->Instance == USART2) {
-		//esp32
-	}
-}
-
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 	if (huart->Instance == USART1) {
+		__HAL_UART_CLEAR_FLAG(&huart1, UART_FLAG_TXE);
+		__HAL_UNLOCK(&huart1); // 解鎖 UART
 	}
 }
 
@@ -332,14 +326,40 @@ int _write(int fd, char *ptr, int len) {
  * @param str
  * @return
  */
-HAL_StatusTypeDef UART_SendString_DMA(const char *str) {
-	if (str == NULL) {
+HAL_StatusTypeDef UART_SendString_DMA(UART_HandleTypeDef* huart, const char *str) {
+	if (str == NULL || strlen(str) == 0) {
 		return HAL_ERROR;
 	}
-	size_t len = strlen(str);
-	if (len == 0) {
+	static uint8_t retry = 0;
+	const uint8_t maxRetries = 3;
+
+	char tempBuffer[64];
+	if (strlen(str) >= sizeof(tempBuffer)) {
+		printf("%-20s String too long for DMA buffer\r\n", "[usart.c]");
 		return HAL_ERROR;
 	}
-	return HAL_UART_Transmit_DMA(&ESP32_USART_PORT, (uint8_t *)str, len);
+	strcpy(tempBuffer, str);
+
+	while (retry <= maxRetries) {
+		if (HAL_UART_GetState(huart) == HAL_UART_STATE_READY) {
+			if (HAL_UART_Transmit_DMA(huart, (uint8_t *)tempBuffer, strlen(tempBuffer)) == HAL_OK) {
+				retry = 0;
+				return HAL_OK;
+			} else {
+				printf("\033[31m%-20s DMA transmission failed\033[0m\r\n", "[usart.c]");
+				return HAL_ERROR;
+			}
+		} else {
+			printf("%-20s UART busy, retry %d/%d\r\n", "[usart.c]", retry, maxRetries);
+			osDelay(1);
+			retry++;
+			if (retry > maxRetries) {
+				printf("\033[31m%-20s UART busy, skipping transmission\033[0m\r\n", "[usart.c]");
+				return HAL_ERROR;
+			}
+		}
+	}
+
+	return HAL_ERROR;
 }
 /* USER CODE END 1 */

@@ -7,6 +7,7 @@
 
 #define MAX_CMD_COUNT 20	//最大命令數量
 #define MAX_CMD_LEN   20	//單條命令字元數
+#define RESBUF_SIZE   10
 
 //建立或執行命令時錯誤種類枚舉
 typedef enum {
@@ -26,7 +27,7 @@ typedef enum {
 
 typedef struct {
 	DateDir_t dir;
-	char resBuf[10];
+	char resBuf[RESBUF_SIZE];
 }ResStruct_t;
 
 extern ResStruct_t* resStruct;

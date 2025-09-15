@@ -1,5 +1,7 @@
 #include "esp32.h"
 
+#include <stdlib.h>
+
 #include "cmsis_os2.h"
 
 SemaphoreHandle_t cmdSemaphore = NULL;
@@ -12,6 +14,7 @@ SemaphoreHandle_t recvSemaphore = NULL;
 char rxBuf[RXBUF_SIZE] = {0};
 volatile uint16_t rxLen = 0;
 char cmdBuf[CMD_BUF_SIZE] = {0};
+char srcHash[70] = {0};
 
 void ESP32_Init(void) {
 	ESP32_SetState(ESP32_INIT);
@@ -45,29 +48,40 @@ void ESP32_SetState(ESP32_STATE_TypeDef state) {
 }
 
 void ESP32_RxHandler_Task(void *argument) {
+	ResStruct_t *resStruct = pvPortMalloc(sizeof(ResStruct_t)); //回調函數返回結構體
 	// cmdQueue = xQueueCreateStatic(10,
 	//                               sizeof(char) * MAX_CMD_LEN,
 	//                               cmdQueueArea,
 	//                               &cmdQueue_s);
 	cmdSemaphore = xSemaphoreCreateBinary();
+	if (resStruct == NULL || cmdSemaphore == NULL) {
+		printf("%-20s rxTask init failed!\r\n", "[esp32.c]");
+		while (1) {}
+	}
 
 	while (1) {
-		if (pdTRUE == xSemaphoreTake(cmdSemaphore, pdMS_TO_TICKS(5000))) {
+		if (pdTRUE == xSemaphoreTake(cmdSemaphore, pdMS_TO_TICKS(1000))) {
 			// printf("%-20s %-30s %s\r\n", "[esp32.c]", "received cmd :", cmdBuf);
-			cmdBuf[CMD_BUF_SIZE - 1] = '\0';
+
+			// execute_command(cmdBuf, isReqCmd(cmdBuf) ? resStruct : NULL);
+			// if (strlen(resStruct->resBuf) != 0) {
+			// 	UART_SendString_DMA(&ESP32_USART_PORT, resStruct->resBuf);
+			// 	memset(resStruct->resBuf, 0, RESBUF_SIZE);
+			// }
 
 			if (isReqCmd(cmdBuf) == true) {
 				char ResBuf[10]; //傳回結果緩衝區
 				execute_command(cmdBuf, ResBuf);
-				UART_SendString_DMA(ResBuf);
+				UART_SendString_DMA(&ESP32_USART_PORT, ResBuf);
 				memset(ResBuf, 0, 10);
 			} else {
 				execute_command(cmdBuf, NULL);
 			}
+			memset(cmdBuf, 0, CMD_BUF_SIZE);
 			rxLen = 0;
-			memset(cmdBuf, 0, sizeof(cmdBuf));
+		} else {
+			// printf("%-20s minimum stack size: %u\r\n", "[esp32.c]", uxTaskGetStackHighWaterMark(NULL));
 		}
-		vTaskDelay(pdMS_TO_TICKS(10));
 	}
 }
 
@@ -78,9 +92,9 @@ void WifiStatusHandler(const char *args, ResStruct_t* _resStruct) {
 	extract_parameter(args, wifiStatus, 20);
 	if (wifiStatus[0] == '1') {
 		strncpy(ip, wifiStatus+1, 20);
-		printf("%-20s Wifi connected @ %s\r\n", "[esp32.c]", ip);;
+		printf("%-20s Wifi connected @ %s\r\n", "[esp32.c]", ip);
 	} else {
-		printf("%-20s Wifi disconnected\r\n", "[esp32.c]");;
+		printf("%-20s Wifi disconnected\r\n", "[esp32.c]");
 	}
 }
 
@@ -91,22 +105,24 @@ void StartTransmissionHandler(const char *args, ResStruct_t* _resStruct) {
 }
 
 void SetFileNameHandler(const char *args, ResStruct_t* _resStruct) {
-	char filename[FILENAME_SIZE] = {0};
-
+	char tmpStr[FILENAME_SIZE];
+	tmpStr[FILENAME_SIZE - 1] = '\0';
 	filename[FILENAME_SIZE - 1] = '\0';
-	if (false == extract_parameter(args, filename, FILENAME_SIZE)) {
+
+	if (false == extract_parameter(args, tmpStr, FILENAME_SIZE)) {
 		ESP32_SetState(ESP32_IDLE);
 		printf("%-20s Invalid filename format\r\n", "[esp32.c]");
 		return;
 	}
+	strcpy(filename, tmpStr);
 	printf("%-20s %-30s %s\r\n", "[esp32.c]", "received file name :", filename);
 
-	printf("%-20s %-30s free heap : %d bytes \r\n",
-	       "[fileTask.c]",
+	printf("%-20s %-30s free heap: %d bytes \r\n",
+	       "[esp32.c]",
 	       "ready to creat Gcode task",
 	       xPortGetFreeHeapSize());
 
-	gcodeRxTaskHandle = osThreadNew(Gcode_RxHandler_Task, filename, &gcodeTask_attributes);
+	gcodeRxTaskHandle = osThreadNew(Gcode_RxHandler_Task, tmpStr, &gcodeTask_attributes);
 	if (gcodeRxTaskHandle == NULL) {
 		ESP32_SetState(ESP32_IDLE);
 		printf("%-20s Error creating gcode task\r\n", "[esp32.c]");
@@ -139,9 +155,14 @@ void TransmissionOverHandler(const char *args, ResStruct_t* _resStruct) {
 	vTaskDelay(pdMS_TO_TICKS(100)); // 等待堆記憶體更新
 	printf("%-20s free heap: %d bytes\r\n", "[esp32.c]", xPortGetFreeHeapSize());
 
-	extract_parameter(args, hashVal, SHA256_HASH_SIZE);
-	printf("%-20s hash val: %s\r\n", "[esp32.c]", hashVal);
-	printf("%-20s File verification succeeded\r\n", "[esp32.c]");
+	extract_parameter(args, srcHash, SHA256_HASH_SIZE);
+	// printf("%-20s hash val: %s\r\n", "[esp32.c]", hashVal);
+	// printf("%-20s srchash val: %s\r\n", "[esp32.c]", srcHash);
+	if (strcmp(srcHash, hashVal) == 0) {
+		printf("%-20s File verification succeeded\r\n", "[esp32.c]");
+	} else {
+		printf("%-20s File verification failed\r\n", "[esp32.c]");
+	}
 	printf("%-20s \r\n======================TransMission Successed=====================\r\n", "[esp32.c]");
 	ESP32_SetState(ESP32_IDLE);
 	reportOK_2_ESP32();

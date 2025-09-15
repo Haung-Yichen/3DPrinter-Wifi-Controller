@@ -52,7 +52,7 @@ void MX_USART3_UART_Init(void);
  * @param str 傳入欲傳送的字串指標 (必須是以 '\0' 結尾的字串)
  * @retval HAL status
  */
-HAL_StatusTypeDef UART_SendString_DMA(const char *str);
+HAL_StatusTypeDef UART_SendString_DMA(UART_HandleTypeDef* huart, const char *str);
 
 /* USER CODE END Prototypes */
 

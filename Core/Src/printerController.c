@@ -25,19 +25,25 @@ void PC_RegCallback(void) {
 void StartToPrintCmdHandler(const char *args, ResStruct_t* _resStruct) {
     FIL file;
     FRESULT f_res;
-    char filename[FILENAME_SIZE] = {0};
     char gcode_line[256] = {0};
     char printer_response[64] = {0};
 	uint32_t line = 0;
-
     bool file_opened = false;
-	strcpy(filename, "cube.gcode");
 
+	if (strlen(filename) <= 0) {
+		printf("%-20s no file selected\r\n", "[printerController.c]");
+		return;
+	}
+	
     f_res = f_open(&file, filename, FA_READ);
     if (f_res != FR_OK) {
         printf("%-20s Failed to open file: %d\r\n", "[printerController.c]", f_res);
         return;
     }
+	if (f_size(&file) <= 0) {
+		printf("%-20s file has no content\r\n", "[printerController.c]");
+		return;
+	}
     file_opened = true;
     ESP32_SetState(ESP32_BUSY);
 
@@ -88,7 +94,7 @@ void StartToPrintCmdHandler(const char *args, ResStruct_t* _resStruct) {
         // 清空 gcode_line 準備下一行
         memset(gcode_line, 0, sizeof(gcode_line));
     }
-    printf("%-20s printTask completed! line : %d\r\n","[printerController.c]", line);
+    printf("\r\n%-20s printTask completed! line: %d\r\n","[printerController.c]", line);
 	f_close(&file);
     ESP32_SetState(ESP32_IDLE);
 }
@@ -102,7 +108,7 @@ void StopPrintingCmdHandler(const char *args, ResStruct_t* _resStruct) {
 }
 
 void GoHomeCmdHandler(const char *args, ResStruct_t* _resStruct) {
-	// TODO: 實作回到原點邏輯
+	UART_SendString_DMA(&DEBUG_USART_PORT, "G28\r\n");
 }
 
 void GetRemainingTimeCmdHandler(const char *args, ResStruct_t* _resStruct) {

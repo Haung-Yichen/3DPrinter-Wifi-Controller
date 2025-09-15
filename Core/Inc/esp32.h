@@ -34,6 +34,7 @@
 #define WAIT_ESP32_READY_TIMEOUT 10                  //最大等待ESP32初始化時間
 #define ESP32_RECV_DELAY         100
 
+
 typedef enum {
 	ESP32_INIT = 0,
 	ESP32_IDLE,
@@ -48,7 +49,6 @@ extern SemaphoreHandle_t recvSemaphore;       //通知可以開始接收
 extern volatile uint16_t rxLen;
 extern char rxBuf[RXBUF_SIZE];             //uart接收緩衝區
 extern char cmdBuf[CMD_BUF_SIZE];          //命令接收緩衝區
-static char sha256_hash[256];
 static ESP32_STATE_TypeDef currentState = ESP32_INIT;
 
 /**

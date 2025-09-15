@@ -216,44 +216,7 @@ void DMA1_Channel6_IRQHandler(void) {
   * @brief This function handles USART1 global interrupt.
   */
 void USART1_IRQHandler(void) {
-	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
-	// 判斷是否進入 IDLE 中斷
-	if (__HAL_UART_GET_FLAG(&ESP32_USART_PORT, UART_FLAG_IDLE)) {
-		__HAL_UART_CLEAR_IDLEFLAG(&ESP32_USART_PORT);
-		HAL_UART_DMAStop(&ESP32_USART_PORT);
-		rxLen = RXBUF_SIZE - __HAL_DMA_GET_COUNTER(ESP32_USART_PORT.hdmarx);
-		if (!rxLen) goto restart;
-
-		rxBuf[rxLen] = '\0';
-		cmdBuf[CMD_BUF_SIZE - 1] = '\0';
-		fileBuf[FILE_BUF_SIZE - 1] = '\0';
-		printf("%-20s cmd : %s\r\n", "[f1xx_it.c]", rxBuf);
-		if (rxBuf[0] == 'c') {
-			//判斷數據是不是命令
-			if (isValidCmd(rxBuf) == CMD_OK) {
-				strncpy(cmdBuf, rxBuf, rxLen);
-
-				//通知esp32 rxHandler
-				xSemaphoreGiveFromISR(cmdSemaphore, &xHigherPriorityTaskWoken);
-				portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-			} else {
-				printf("%-20s unvalid cmd\r\n", "[f1xx_it.c]");
-				UART_SendString_DMA("eCMDError\r\n");
-			}
-		} else {
-			//否則就是檔案數據
-			fileLen = rxLen;
-			strncpy(fileBuf, rxBuf, rxLen);
-			xSemaphoreGiveFromISR(fileSemaphore, &xHigherPriorityTaskWoken);
-			portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-		}
-	restart:
-		rxLen = 0;
-		memset(rxBuf, 0, sizeof(rxBuf));
-		HAL_UART_Receive_DMA(&ESP32_USART_PORT, rxBuf, sizeof(rxBuf));
-	}
-	HAL_UART_IRQHandler(&ESP32_USART_PORT); // 讓 HAL 處理其他 UART 相關的中斷
+	HAL_UART_IRQHandler(&huart1);
 }
 
 /**
@@ -270,10 +233,10 @@ void USART2_IRQHandler(void) {
 		if (!rxLen) goto restart;
 
 		rxBuf[rxLen] = '\0';
-		cmdBuf[CMD_BUF_SIZE - 1] = '\0';
-		fileBuf[FILE_BUF_SIZE - 1] = '\0';
+		cmdBuf[rxLen] = '\0';
+		fileBuf[rxLen] = '\0';
 
-		// printf("%-20s rxBuf : %s\r\n", "[f1xx_it.c]", rxBuf);
+		// printf("%-20s rxBuf: %s\r\n", "[it.c]", rxBuf);
 		if (rxBuf[0] == 'c') {
 			//判斷數據是不是命令
 			if (isValidCmd(rxBuf) == CMD_OK) {
@@ -283,8 +246,8 @@ void USART2_IRQHandler(void) {
 				xSemaphoreGiveFromISR(cmdSemaphore, &xHigherPriorityTaskWoken);
 				portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 			} else {
-				printf("%-20s unvalid cmd\r\n", "[f1xx_it.c]");
-				UART_SendString_DMA("eCMDError\r\n");
+				printf("%-20s unvalid cmd\r\n", "[it.c]");
+				UART_SendString_DMA(&ESP32_USART_PORT, "eCMDError\r\n");
 			}
 			goto restart;
 		}
@@ -306,7 +269,7 @@ void USART2_IRQHandler(void) {
 void UserKey_IRQHandler(void) {
 	if (__HAL_GPIO_EXTI_GET_IT(USER_KEY_PIN) != RESET) {
 		NVIC_SystemReset();
-		__HAL_GPIO_EXTI_CLEAR_IT(USER_KEY_EXTI_IRQn);
+		__HAL_GPIO_EXTI_CLEAR_IT(USER_KEY_PIN);
 	}
 }
 /* USER CODE END 1 */

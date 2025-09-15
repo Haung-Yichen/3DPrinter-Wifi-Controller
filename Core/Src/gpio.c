@@ -43,10 +43,11 @@ void MX_GPIO_Init(void) {
 	/* GPIO Ports Clock Enable */
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOB_CLK_ENABLE();
+	__HAL_RCC_SYSCFG_CLK_ENABLE();
 
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 	GPIO_InitStruct.Pin = USER_KEY_PIN;
-	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	HAL_GPIO_Init(USER_KEY_GPIO_PORT, &GPIO_InitStruct);
 	HAL_NVIC_SetPriority(USER_KEY_EXTI_IRQn, 0, 0);

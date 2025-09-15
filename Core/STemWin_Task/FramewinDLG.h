@@ -22,8 +22,11 @@
 
 // USER START (Optionally insert additional includes)
 // USER END
-
+#include <stdio.h>
+#include <stdint.h>
 #include "DIALOG.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 /*********************************************************************
 *
@@ -42,9 +45,13 @@ WM_HWIN CreateFramewin(void);
 
 void MainTask(void) {
     CreateFramewin();       // �I�s GUIBuilder ���ͪ��D����
-
+    // uint16_t i = 0;
     while (1) {
         GUI_CURSOR_Show();
+        // if (i++ >= 100) {
+        //   i = 0;
+        //   printf("%-20s minimum stack size: %u\r\n", "[GuiTask]", uxTaskGetStackHighWaterMark(NULL));
+        // }
         GUI_Delay(10);        // �w����s GUI
     }
 }

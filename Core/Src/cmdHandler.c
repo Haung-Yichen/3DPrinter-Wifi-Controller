@@ -47,12 +47,13 @@ CmdHandlerStat_t execute_command(const char *cmd, ResStruct_t* _resStruct) {
 		if (strncmp(cmd, commands[i].cmdName, cmdLen) == 0) {
 			strncpy(cmdName, cmd, cmdLen);
 			cmdName[cmdLen] = '\0';
-			printf("%-20s %s is running...\r\n", "[cmdHandler.c]", cmdName);
+			printf("%-20s %s is running...\r\n", "[cmdhandler.c]", cmdName);
 			commands[i].callback(cmd, _resStruct);
+			// memset(cmdName, 0, MAX_CMD_LEN);
 			return CMD_OK;
 		}
 	}
-	printf("%-20s No matching command found for %s\r\n", "[cmdHandler.c]", cmd); // 除錯
+	printf("%-20s No matching command found for: %s\r\n", "[cmdhandler.c]", cmd);
 	return EXC_ERR;
 }
 
