@@ -53,6 +53,7 @@
 void setUART2HighZ();
 void SystemClock_Config(void);
 void MX_FREERTOS_Init(void);
+uint8_t ILI9341_Read_MADCTL(void);
 
 /**
   * @brief  主程式進入點
@@ -158,7 +159,6 @@ void Error_Handler(void) {
 	while (1) {
 	}
 }
-
 #ifdef  USE_FULL_ASSERT
 void assert_failed(uint8_t *file, uint32_t line) {
 	/* 使用者可自行顯示錯誤的檔名與行號 */

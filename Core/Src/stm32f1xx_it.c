@@ -60,6 +60,7 @@
 extern DMA_HandleTypeDef hdma_usart1_tx;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart2_rx;
+extern DMA_HandleTypeDef hdma_usart2_tx;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
 /* USER CODE BEGIN EV */
@@ -177,39 +178,28 @@ void SysTick_Handler(void) {
   * @brief This function handles DMA1 channel4 global interrupt.
   */
 void DMA1_Channel4_IRQHandler(void) {
-	/* USER CODE BEGIN DMA1_Channel4_IRQn 0 */
-
-	/* USER CODE END DMA1_Channel4_IRQn 0 */
 	HAL_DMA_IRQHandler(&hdma_usart1_tx);
-	/* USER CODE BEGIN DMA1_Channel4_IRQn 1 */
-
-	/* USER CODE END DMA1_Channel4_IRQn 1 */
 }
 
 /**
   * @brief This function handles DMA1 channel5 global interrupt.
   */
 void DMA1_Channel5_IRQHandler(void) {
-	/* USER CODE BEGIN DMA1_Channel5_IRQn 0 */
-
-	/* USER CODE END DMA1_Channel5_IRQn 0 */
 	HAL_DMA_IRQHandler(&hdma_usart1_rx);
-	/* USER CODE BEGIN DMA1_Channel5_IRQn 1 */
-
-	/* USER CODE END DMA1_Channel5_IRQn 1 */
 }
 
 /**
   * @brief This function handles DMA1 channel6 global interrupt.
   */
 void DMA1_Channel6_IRQHandler(void) {
-	/* USER CODE BEGIN DMA1_Channel6_IRQn 0 */
-
-	/* USER CODE END DMA1_Channel6_IRQn 0 */
 	HAL_DMA_IRQHandler(&hdma_usart2_rx);
-	/* USER CODE BEGIN DMA1_Channel6_IRQn 1 */
+}
 
-	/* USER CODE END DMA1_Channel6_IRQn 1 */
+/**
+  * @brief This function handles DMA1 channel7 global interrupt.
+  */
+void DMA1_Channel7_IRQHandler(void) {
+	HAL_DMA_IRQHandler(&hdma_usart2_tx);
 }
 
 /**
@@ -236,7 +226,6 @@ void USART2_IRQHandler(void) {
 		cmdBuf[rxLen] = '\0';
 		fileBuf[rxLen] = '\0';
 
-		// printf("%-20s rxBuf: %s\r\n", "[it.c]", rxBuf);
 		if (rxBuf[0] == 'c') {
 			//判斷數據是不是命令
 			if (isValidCmd(rxBuf) == CMD_OK) {
@@ -252,6 +241,9 @@ void USART2_IRQHandler(void) {
 			goto restart;
 		}
 		//否則就是檔案數據
+		if (rxLen > FILE_BUF_SIZE - 1) {
+			rxLen = FILE_BUF_SIZE - 1;
+		}
 		fileLen = rxLen;
 		strncpy(fileBuf, rxBuf, rxLen);
 		xSemaphoreGiveFromISR(fileSemaphore, &xHigherPriorityTaskWoken);
@@ -266,10 +258,5 @@ void USART2_IRQHandler(void) {
 }
 
 /* USER CODE BEGIN 1 */
-void UserKey_IRQHandler(void) {
-	if (__HAL_GPIO_EXTI_GET_IT(USER_KEY_PIN) != RESET) {
-		NVIC_SystemReset();
-		__HAL_GPIO_EXTI_CLEAR_IT(USER_KEY_PIN);
-	}
-}
+
 /* USER CODE END 1 */

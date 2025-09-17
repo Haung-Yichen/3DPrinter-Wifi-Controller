@@ -63,19 +63,10 @@ void ESP32_RxHandler_Task(void *argument) {
 		if (pdTRUE == xSemaphoreTake(cmdSemaphore, pdMS_TO_TICKS(1000))) {
 			// printf("%-20s %-30s %s\r\n", "[esp32.c]", "received cmd :", cmdBuf);
 
-			// execute_command(cmdBuf, isReqCmd(cmdBuf) ? resStruct : NULL);
-			// if (strlen(resStruct->resBuf) != 0) {
-			// 	UART_SendString_DMA(&ESP32_USART_PORT, resStruct->resBuf);
-			// 	memset(resStruct->resBuf, 0, RESBUF_SIZE);
-			// }
-
-			if (isReqCmd(cmdBuf) == true) {
-				char ResBuf[10]; //傳回結果緩衝區
-				execute_command(cmdBuf, ResBuf);
-				UART_SendString_DMA(&ESP32_USART_PORT, ResBuf);
-				memset(ResBuf, 0, 10);
-			} else {
-				execute_command(cmdBuf, NULL);
+			execute_command(cmdBuf, isReqCmd(cmdBuf) ? resStruct : NULL);
+			if (strlen(resStruct->resBuf) != 0) {
+				UART_SendString_DMA(&ESP32_USART_PORT, resStruct->resBuf);
+				memset(resStruct->resBuf, 0, RESBUF_SIZE);
 			}
 			memset(cmdBuf, 0, CMD_BUF_SIZE);
 			rxLen = 0;
@@ -131,6 +122,7 @@ void SetFileNameHandler(const char *args, ResStruct_t* _resStruct) {
 }
 
 void TransmissionOverHandler(const char *args, ResStruct_t* _resStruct) {
+	vTaskDelay(pdMS_TO_TICKS(10));
 	if (gcodeRxTaskHandle == NULL) {
 		printf("%-20s gcodeRxTaskHandle is NULL\r\n", "[esp32.c]");
 		ESP32_SetState(ESP32_IDLE);
@@ -146,22 +138,32 @@ void TransmissionOverHandler(const char *args, ResStruct_t* _resStruct) {
 		eTaskState state = eTaskGetState(gcodeRxTaskHandle);
 		// printf("%-20s gcodeTaskState: %d\r\n", "[esp32.c]", state);
 		if (state == eDeleted) {
+			gcodeRxTaskHandle = NULL;
 			printf("%-20s Gcode task deleted!\r\n", "[esp32.c]");
 			break;
 		}
 		vTaskDelay(pdMS_TO_TICKS(10));
 	}
-	gcodeRxTaskHandle = NULL;
 	vTaskDelay(pdMS_TO_TICKS(100)); // 等待堆記憶體更新
 	// printf("%-20s free heap: %d bytes\r\n", "[esp32.c]", xPortGetFreeHeapSize());
 
 	extract_parameter(args, srcHash, SHA256_HASH_SIZE);
-	// printf("%-20s hash val: %s\r\n", "[esp32.c]", hashVal);
-	// printf("%-20s srchash val: %s\r\n", "[esp32.c]", srcHash);
+	printf("%-20s hash val: %s\r\n", "[esp32.c]", hashVal);
+	printf("%-20s srchash val: %s\r\n", "[esp32.c]", srcHash);
+
 	if (strcmp(srcHash, hashVal) == 0) {
 		printf("%-20s File verification succeeded\r\n", "[esp32.c]");
 	} else {
-		printf("%-20s File verification failed\r\n", "[esp32.c]");
+		// 驗證不過再驗證一次 再不對叫網頁重發一次
+		memset(hashVal, 0, SHA256_HASH_SIZE);
+		calFileHash(filename);
+		if (strcmp(srcHash, hashVal) == 0) {
+			printf("%-20s File %s verification succeeded\r\n", "[esp32.c]", filename);
+		} else {
+			printf("%-20s File %s verification failed\r\n", "[esp32.c]", filename);
+			ESP32_SetState(ESP32_IDLE);
+			UART_SendString_DMA(&ESP32_USART_PORT, ERROR_FILE_BROKEN);
+		}
 	}
 	printf("%-20s \r\n======================TransMission Successed=====================\r\n", "[esp32.c]");
 	ESP32_SetState(ESP32_IDLE);

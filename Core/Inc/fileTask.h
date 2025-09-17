@@ -30,5 +30,12 @@ extern volatile bool delete;
  */
 void Gcode_RxHandler_Task(void *argument);
 
+/**
+ * @brief 計算檔案sha256哈希值
+ * @param _filename
+ * @return
+ */
+void calFileHash(const char* _filename);
+
 
 #endif //FILETASK_H

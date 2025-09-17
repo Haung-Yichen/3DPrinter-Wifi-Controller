@@ -32,7 +32,6 @@ extern "C" {
 #define USER_KEY_GPIO_PORT GPIOA
 #define USER_KEY_PIN GPIO_PIN_0
 #define USER_KEY_EXTI_IRQn EXTI0_IRQn
-#define USER_KEY_EXTI_IRQHandler UserKey_IRQHandler
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN Private defines */

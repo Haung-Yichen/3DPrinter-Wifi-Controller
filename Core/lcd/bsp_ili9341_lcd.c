@@ -181,7 +181,8 @@ static void ILI9341_FSMC_Config(void) {
 static void ILI9341_REG_Config(void) {
 	lcdid = ILI9341_ReadID();
 
-	if (lcdid == LCDID_ILI9341) {
+	// if (lcdid == LCDID_ILI9341) {
+	if (0) {
 		/*  Power control B (CFh)  */
 		DEBUG_DELAY();
 		ILI9341_Write_Cmd(0xCF);
@@ -646,11 +647,12 @@ void ILI9341_GramScan(uint8_t ucOption) {
 
 	//0x36命令参数的高3位可用于设置GRAM扫描方向
 	ILI9341_Write_Cmd(0x36);
-	if (lcdid == LCDID_ILI9341) {
-		ILI9341_Write_Data(0x08 | (ucOption << 5)); //根据ucOption的值设置LCD参数，共0-7种模式
-	} else if (lcdid == LCDID_ST7789V) {
-		ILI9341_Write_Data(0x00 | (ucOption << 5)); //根据ucOption的值设置LCD参数，共0-7种模式
-	}
+	// if (lcdid == LCDID_ILI9341) {
+	// 	ILI9341_Write_Data(0x08 | (ucOption << 5)); //根据ucOption的值设置LCD参数，共0-7种模式
+	// } else if (lcdid == LCDID_ST7789V) {
+	// 	ILI9341_Write_Data(0x00 | (ucOption << 5)); //根据ucOption的值设置LCD参数，共0-7种模式
+	// }
+	ILI9341_Write_Data(0x00 | (ucOption << 5));
 	ILI9341_Write_Cmd(CMD_SetCoordinateX);
 	ILI9341_Write_Data(0x00); /* x 起始坐标高8位 */
 	ILI9341_Write_Data(0x00); /* x 起始坐标低8位 */

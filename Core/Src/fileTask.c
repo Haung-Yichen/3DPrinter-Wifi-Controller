@@ -7,12 +7,13 @@ SemaphoreHandle_t fileSemaphore = NULL;
 const osThreadAttr_t gcodeTask_attributes = {
 	.name = "Gcode_Rx_Task",
 	.stack_size = 128 * 56,
-	.priority = (osPriority)osPriorityHigh7,
+	.priority = (osPriority) osPriorityHigh7,
 };
 
 char hashVal[SHA256_HASH_SIZE] = {0};
 char fileBuf[FILE_BUF_SIZE] = {0};
 char filename[FILENAME_SIZE] = {0};
+FIL tmpFile;
 volatile uint16_t fileLen = 0;
 volatile bool delete = false;
 
@@ -22,7 +23,6 @@ volatile bool delete = false;
 static void deleteTask();
 
 void Gcode_RxHandler_Task(void *argument) {
-	FIL tmpFile;
 	FRESULT f_res;
 	UINT fnum;
 	SHA256_CTX sha256_ctx;
@@ -34,15 +34,15 @@ void Gcode_RxHandler_Task(void *argument) {
 	char filename[FILENAME_SIZE] = {0};
 	bool should_exit = false;
 	bool received_data = false;
-	bool done = false;
+	bool sdErr = false;
 
 	sha256_init(&sha256_ctx);
 	fileSemaphore = xSemaphoreCreateBinary();
 
 	printf("%-20s %-30s free heap: %d bytes \r\n",
-	   "[fileTask.c]",
-	   "Gcode_RxHandler_Task created!",
-	   xPortGetFreeHeapSize());
+	       "[fileTask.c]",
+	       "Gcode_RxHandler_Task created!",
+	       xPortGetFreeHeapSize());
 
 	if (fileSemaphore == NULL) {
 		printf("%-20s failed to creat fileSemaphore!\r\n", "[fileTask.c]");
@@ -91,29 +91,32 @@ void Gcode_RxHandler_Task(void *argument) {
 			f_res = f_write(&tmpFile, fileBuf, fileLen, &fnum);
 			sha256_update(&sha256_ctx, fileBuf, fileLen);
 			if (f_res != FR_OK) {
-				printf("%-20s SD write error\r\n", "[fileTask.c]");
+				printf("%-20s SD write error @%s\r\n", "[fileTask.c]", fileBuf);
 				printf_fatfs_error(f_res);
 				f_close(&tmpFile);
 				should_exit = true;
-			}
-			fnumCount += fnum;
-			f_sync(&tmpFile); //1K刷新一次
-// 			if (i >= 10) {
-// 				i = 0;
+			} else {
+				f_sync(&tmpFile); //1K刷新一次
+				fnumCount += fnum;
+// 				if (i >= 10) {
+// 					i = 0;
 // #ifdef DEBUG
-// 				//分析堆棧使用狀況
-// 				if (uxTaskGetStackHighWaterMark(NULL) < stackHighWaterMark) {
-// 					stackHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
-// 				}
+// 					//分析堆棧使用狀況
+// 					if (uxTaskGetStackHighWaterMark(NULL) < stackHighWaterMark) {
+// 						stackHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
+// 					}
 // #endif
-// 			}
+// 				}
+			}
 			memset(fileBuf, 0, FILE_BUF_SIZE);
 			fileLen = 0;
 		} else {
-			cnt ++;
+			cnt++;
 			if (cnt >= 5) {
 				should_exit = true;
 				printf("%-20s timeout waiting for uart\r\n", "[fileTask.c]");
+				// UART_SendString_DMA(&ESP32_USART_PORT, "reset\n");
+				HAL_UART_Transmit(&ESP32_USART_PORT, (uint8_t *) "reset\n", strlen("reset\n"), HAL_MAX_DELAY);
 			}
 		}
 
@@ -132,8 +135,8 @@ void Gcode_RxHandler_Task(void *argument) {
 			// printf("%-20s minimum stack size: %u\r\n", "[fileTask.c]", stackHighWaterMark);
 			uint32_t tmp = xTaskGetTickCount() - timer;
 			printf("%-20s total time: %dms\r\n",
-				   "[fileTask.c]",
-				   tmp);
+			       "[fileTask.c]",
+			       tmp);
 			deleteTask();
 		}
 		// vTaskDelay(pdMS_TO_TICKS(1));
@@ -145,9 +148,46 @@ static void deleteTask() {
 		vSemaphoreDelete(fileSemaphore);
 		fileSemaphore = NULL;
 	}
+	if (gcodeRxTaskHandle != NULL) {
+		vTaskDelete(gcodeRxTaskHandle);
+	}
 	// } else if (hashHandle != NULL) {
 	// 	cmox_hash_cleanup(hashHandle);
 	// 	hashHandle = NULL;
 	// }
-	vTaskDelete(NULL);
+}
+
+void calFileHash(const char* _filename) {
+	FIL tmpFile;
+	FRESULT f_res;
+	SHA256_CTX sha256_ctx;
+	char gcode_line[256] = {0};
+	uint8_t hash_output[SHA256_BLOCK_SIZE];
+
+	if (strlen(_filename) <= 0) {
+		printf("%-20s no file selected\r\n", "[printerController.c]");
+		return;
+	}
+
+	f_res = f_open(&tmpFile, _filename, FA_READ);
+	if (f_res != FR_OK) {
+		printf("%-20s Failed to open file: %s\r\n", "[printerController.c]", _filename);
+		return;
+	}
+	if (f_size(&tmpFile) <= 0) {
+		printf("%-20s file has no content\r\n", "[printerController.c]");
+		return;
+	}
+	sha256_init(&sha256_ctx);
+
+	while (f_gets(gcode_line, sizeof(gcode_line), &tmpFile) != NULL) {
+		sha256_update(&sha256_ctx, gcode_line, strlen(gcode_line));
+	}
+	sha256_final(&sha256_ctx, hash_output);
+
+	// 轉換為十六進位字串
+	for (int j = 0; j < SHA256_BLOCK_SIZE; j++) {
+		sprintf(hashVal + (j * 2), "%02x", hash_output[j]);
+	}
+	hashVal[SHA256_BLOCK_SIZE * 2] = '\0';
 }

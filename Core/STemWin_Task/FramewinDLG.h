@@ -26,6 +26,8 @@
 #include <stdint.h>
 #include "DIALOG.h"
 #include "FreeRTOS.h"
+#include "gpio.h"
+#include "stm32f1xx_hal_gpio.h"
 #include "task.h"
 
 /*********************************************************************

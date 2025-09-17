@@ -36,7 +36,7 @@ void StartToPrintCmdHandler(const char *args, ResStruct_t* _resStruct) {
 	
     f_res = f_open(&file, filename, FA_READ);
     if (f_res != FR_OK) {
-        printf("%-20s Failed to open file: %d\r\n", "[printerController.c]", f_res);
+        printf("%-20s Failed to open file: %s\r\n", "[printerController.c]", filename);
         return;
     }
 	if (f_size(&file) <= 0) {
@@ -49,11 +49,11 @@ void StartToPrintCmdHandler(const char *args, ResStruct_t* _resStruct) {
     while (f_gets(gcode_line, sizeof(gcode_line), &file) != NULL) {
     	line++;
         // 跳過空行和註解行
-        if (strlen(gcode_line) == 0 || strchr(gcode_line, ';') != NULL) {
-            continue;
-        }
+        // if (strlen(gcode_line) == 0 || strchr(gcode_line, ';') != NULL) {
+        //     continue;
+        // }
         // 發送 G-code 到印表機
-        printf("Sending: %s", gcode_line);
+        printf("%s", gcode_line);
     	// UART_SendString_DMA(&huart1, gcode_line);
 
         // HAL_StatusTypeDef uart_status = HAL_UART_Transmit(&huart3,
@@ -94,7 +94,7 @@ void StartToPrintCmdHandler(const char *args, ResStruct_t* _resStruct) {
         // 清空 gcode_line 準備下一行
         memset(gcode_line, 0, sizeof(gcode_line));
     }
-    printf("\r\n%-20s printTask completed! line: %d\r\n","[printerController.c]", line);
+    printf("\r\n%-20s printTask completed! line: %d file: %s\r\n","[printerController.c]", line, filename);
 	f_close(&file);
     ESP32_SetState(ESP32_IDLE);
 }
@@ -105,6 +105,7 @@ void PausePrintingCmdHandler(const char *args, ResStruct_t* _resStruct) {
 
 void StopPrintingCmdHandler(const char *args, ResStruct_t* _resStruct) {
 	//清空列印計數器，印表機回原點
+	UART_SendString_DMA(&ESP32_USART_PORT, "ok\r\n");
 }
 
 void GoHomeCmdHandler(const char *args, ResStruct_t* _resStruct) {
