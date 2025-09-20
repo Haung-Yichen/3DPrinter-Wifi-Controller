@@ -241,9 +241,6 @@ void USART2_IRQHandler(void) {
 			goto restart;
 		}
 		//否則就是檔案數據
-		if (rxLen > FILE_BUF_SIZE - 1) {
-			rxLen = FILE_BUF_SIZE - 1;
-		}
 		fileLen = rxLen;
 		strncpy(fileBuf, rxBuf, rxLen);
 		xSemaphoreGiveFromISR(fileSemaphore, &xHigherPriorityTaskWoken);

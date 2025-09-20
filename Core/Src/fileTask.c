@@ -69,7 +69,6 @@ void Gcode_RxHandler_Task(void *argument) {
 		f_close(&tmpFile); // 關閉檔案
 		deleteTask();
 	}
-	timer = xTaskGetTickCount();
 	vTaskDelay(ESP32_RECV_DELAY);
 	reportOK_2_ESP32();
 
@@ -80,7 +79,7 @@ void Gcode_RxHandler_Task(void *argument) {
 #ifdef DEBUG
 	stackHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
 #endif
-
+	timer = xTaskGetTickCount();
 	while (1) {
 		//==================開始接收==================//
 		received_data = (pdTRUE == xSemaphoreTake(fileSemaphore, pdMS_TO_TICKS(1000)));
@@ -88,7 +87,7 @@ void Gcode_RxHandler_Task(void *argument) {
 			cnt = 0;
 			i++;
 			// 正常接收邏輯
-			f_res = f_write(&tmpFile, fileBuf, fileLen, &fnum);
+			// f_res = f_write(&tmpFile, fileBuf, fileLen, &fnum);
 			sha256_update(&sha256_ctx, fileBuf, fileLen);
 			if (f_res != FR_OK) {
 				printf("%-20s SD write error @%s\r\n", "[fileTask.c]", fileBuf);
@@ -96,7 +95,7 @@ void Gcode_RxHandler_Task(void *argument) {
 				f_close(&tmpFile);
 				should_exit = true;
 			} else {
-				f_sync(&tmpFile); //1K刷新一次
+				// f_sync(&tmpFile); //1K刷新一次
 				fnumCount += fnum;
 // 				if (i >= 10) {
 // 					i = 0;
@@ -121,6 +120,7 @@ void Gcode_RxHandler_Task(void *argument) {
 		}
 
 		if (should_exit == true || delete == true) {
+			uint32_t tmp = xTaskGetTickCount() - timer;
 			//完成 SHA256 計算
 			uint8_t hash_output[SHA256_BLOCK_SIZE];
 			sha256_final(&sha256_ctx, hash_output);
@@ -133,7 +133,6 @@ void Gcode_RxHandler_Task(void *argument) {
 			delete = false;
 			printf("%-20s fnumCount: %d\r\n", "[fileTask.c]", fnumCount);
 			// printf("%-20s minimum stack size: %u\r\n", "[fileTask.c]", stackHighWaterMark);
-			uint32_t tmp = xTaskGetTickCount() - timer;
 			printf("%-20s total time: %dms\r\n",
 			       "[fileTask.c]",
 			       tmp);
@@ -171,10 +170,12 @@ void calFileHash(const char* _filename) {
 
 	f_res = f_open(&tmpFile, _filename, FA_READ);
 	if (f_res != FR_OK) {
+		f_close(&tmpFile);
 		printf("%-20s Failed to open file: %s\r\n", "[printerController.c]", _filename);
 		return;
 	}
 	if (f_size(&tmpFile) <= 0) {
+		f_close(&tmpFile);
 		printf("%-20s file has no content\r\n", "[printerController.c]");
 		return;
 	}
@@ -184,6 +185,7 @@ void calFileHash(const char* _filename) {
 		sha256_update(&sha256_ctx, gcode_line, strlen(gcode_line));
 	}
 	sha256_final(&sha256_ctx, hash_output);
+	f_close(&tmpFile);
 
 	// 轉換為十六進位字串
 	for (int j = 0; j < SHA256_BLOCK_SIZE; j++) {

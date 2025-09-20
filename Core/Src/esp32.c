@@ -71,7 +71,7 @@ void ESP32_RxHandler_Task(void *argument) {
 			memset(cmdBuf, 0, CMD_BUF_SIZE);
 			rxLen = 0;
 		} else {
-			// printf("%-20s minimum stack size: %u\r\n", "[esp32.c]", uxTaskGetStackHighWaterMark(NULL));
+			printf("%-20s minimum stack size: %u\r\n", "[esp32.c]", uxTaskGetStackHighWaterMark(NULL));
 		}
 	}
 }
@@ -162,7 +162,7 @@ void TransmissionOverHandler(const char *args, ResStruct_t* _resStruct) {
 		} else {
 			printf("%-20s File %s verification failed\r\n", "[esp32.c]", filename);
 			ESP32_SetState(ESP32_IDLE);
-			UART_SendString_DMA(&ESP32_USART_PORT, ERROR_FILE_BROKEN);
+			// UART_SendString_DMA(&ESP32_USART_PORT, ERROR_FILE_BROKEN);
 		}
 	}
 	printf("%-20s \r\n======================TransMission Successed=====================\r\n", "[esp32.c]");
